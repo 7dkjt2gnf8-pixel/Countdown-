@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
+<title>Countdown+</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3D7DEA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Countdown+">
+<style>
+  :root{
+    --bg: #1B2C4F;
+    --surface: #24396A;
+    --border: #3A537F;
+    --text: #EDF0F7;
+    --text-muted: #8A94B3;
+    --accent: #3D7DEA;
+    --accent-dark: #2E63BD;
+    --danger: #EF6B5D;
+    --radius: 22px;
+  }
+  *{box-sizing:border-box;}
+  html{
+    touch-action:manipulation;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    background:var(--bg);
+    height:100%;
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Aptos', 'Aptos Display', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    min-height:100%;
+    -webkit-font-smoothing:antialiased;
+    touch-action:manipulation;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  /* Les champs de saisie restent normalement sélectionnables/éditables */
+  input, textarea{
+    -webkit-user-select:text;
+    user-select:text;
+    -webkit-touch-callout:default;
+  }
+  #app{
+    max-width:640px;
+    margin:0 auto;
+    padding:calc(28px + env(safe-area-inset-top, 0px)) 16px 90px;
+    background:var(--bg);
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  header{
+    margin-bottom:22px;
+    margin-top:8px;
+  }
+  header h1{
+    font-family:'Aptos Display', 'Aptos', system-ui, sans-serif;
+    font-weight:800;
+    font-size:28px;
+    letter-spacing:-0.01em;
+    margin:0;
+    color:var(--text);
+  }
+  header .eyebrow{
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+
+  /* ---- Form panel ---- */
+  .form-panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:24px;
+    box-shadow:0 1px 3px rgba(30,30,60,.05);
+  }
+  .segmented{
+    display:inline-flex;
+    background:var(--bg);
+    border-radius:14px;
+    padding:4px;
+    margin-bottom:16px;
+    width:100%;
+  }
+  .segmented button{
+    flex:1;
+    font-size:14px;
+    font-weight:700;
+    background:transparent;
+    border:none;
+    color:var(--text-muted);
+    padding:10px 14px;
+    border-radius:11px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+    font-family:inherit;
+  }
+  .segmented button.active{
+    background:var(--accent);
+    color:#fff;
+  }
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .field-row.single{grid-template-columns:1fr;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--text-muted);
+  }
+  .field input{
+    background:var(--bg);
+    border:1.5px solid transparent;
+    border-radius:12px;
+    color:var(--text);
+    padding:11px 13px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:600;
+  }
+  .field input:focus{
+    outline:none;
+    border-color:var(--accent);
+    background:var(--surface);
+  }
+  .field input.invalid{
+    border-color:var(--danger);
+    background:var(--surface);
+  }
+  .date-input-wrap{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .date-input-wrap input[type="text"]{
+    flex:1;
+    min-width:0;
+  }
+  .calendar-btn{
+    flex-shrink:0;
+    background:var(--bg);
+    border:none;
+    border-radius:12px;
+    width:40px;
+    height:40px;
+    font-size:17px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .calendar-btn:hover{background:var(--border);}
+  .hidden-picker{
+    position:absolute;
+    width:1px;
+    height:1px;
+    opacity:0;
+    pointer-events:none;
+    border:0;
+    padding:0;
+    left:0;
+    top:0;
+  }
+  .credit-fields{display:none;}
+  .credit-fields.visible{display:contents;}
+  .color-swatches{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .color-swatch{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.5);
+    position:relative;
+  }
+  .color-swatch.selected::after{
+    content:'✓';
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:16px;
+    font-weight:800;
+  }
+  .color-swatch.selected{
+    box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--accent);
+  }
+  .icon-swatches{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .icon-swatch{
+    width:42px;
+    height:42px;
+    border-radius:13px;
+    border:none;
+    background:var(--bg);
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .icon-swatch.selected{
+    background:var(--accent);
+    box-shadow:0 0 0 2px var(--accent-dark) inset;
+  }
+  button.primary{
+    width:100%;
+    font-family:inherit;
+    font-size:16px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:15px 20px;
+    border-radius:18px;
+    cursor:pointer;
+    font-weight:800;
+    box-shadow:0 4px 14px rgba(61,125,234,.35);
+  }
+  button.primary:hover{background:var(--accent-dark);}
+  .add-toggle{
+    margin-top:20px;
+    margin-bottom:16px;
+  }
+  .submit-row{
+    margin-top:6px;
+    display:flex;
+    gap:10px;
+  }
+  .submit-row button.primary{flex:2;}
+  button.secondary{
+    flex:1;
+    font-family:inherit;
+    font-size:16px;
+    background:var(--bg);
+    color:var(--text-muted);
+    border:none;
+    padding:15px 20px;
+    border-radius:18px;
+    cursor:pointer;
+    font-weight:700;
+  }
+  button.secondary:hover{background:var(--border);}
+  .form-error{
+    color:var(--danger);
+    font-size:13px;
+    font-weight:600;
+    margin-top:8px;
+    display:none;
+  }
+
+  /* ---- Cards ---- */
+  .cards-grid{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .card{
+    position:relative;
+    border-radius:var(--radius);
+    overflow:hidden;
+    color:#fff;
+    box-shadow:0 4px 14px rgba(30,30,60,.10);
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+    transition:box-shadow .15s ease;
+  }
+  .card.selected{
+    box-shadow:0 0 0 3px #fff, 0 0 0 6px var(--accent), 0 10px 22px rgba(30,30,60,.28);
+  }
+
+  .card-actions{
+    position:absolute;
+    top:10px;
+    right:10px;
+    display:flex;
+    gap:8px;
+    opacity:0;
+    transform:translateY(-4px);
+    pointer-events:none;
+    transition:opacity .15s ease, transform .15s ease;
+    z-index:2;
+  }
+  .card.selected .card-actions{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+  .card-action-btn{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
+    box-shadow:0 2px 6px rgba(0,0,0,.3);
+    cursor:pointer;
+  }
+  .card-action-btn.delete-action{background:#fff;}
+
+  .confirm-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(20,20,30,.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:60;
+    padding:24px;
+  }
+  .confirm-box{
+    background:var(--surface);
+    border-radius:20px;
+    padding:22px;
+    max-width:340px;
+    width:100%;
+    box-shadow:0 12px 30px rgba(0,0,0,.25);
+  }
+  .confirm-text{
+    font-size:15px;
+    font-weight:700;
+    color:var(--text);
+    margin:0 0 18px;
+    text-align:center;
+    line-height:1.4;
+  }
+  .confirm-actions{display:flex;gap:10px;}
+  .confirm-actions button{
+    flex:1;
+    padding:13px;
+    border-radius:14px;
+    border:none;
+    font-family:inherit;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .confirm-cancel-btn{background:var(--bg); color:var(--text-muted);}
+  .confirm-danger-btn{background:var(--danger); color:#fff;}
+  .card-main{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:16px 16px;
+  }
+  .icon-badge{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    background:rgba(255,255,255,.22);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    flex-shrink:0;
+  }
+  .card-text{flex:1; min-width:0;}
+  .card-title{
+    font-size:19px;
+    font-weight:800;
+    margin:0 0 2px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .card-sub{
+    font-size:13px;
+    font-weight:600;
+    opacity:.85;
+  }
+  .card-number{
+    background:rgba(0,0,0,.16);
+    padding:10px 18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    min-width:78px;
+  }
+  .number-value{
+    font-size:30px;
+    font-weight:800;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .number-label{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    opacity:.85;
+  }
+  .number-sub{
+    font-size:10.5px;
+    font-weight:600;
+    opacity:.75;
+    margin-top:2px;
+    font-variant-numeric:tabular-nums;
+  }
+  .card-number{cursor:pointer;}
+  .number-ymd{
+    display:none;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.5;
+    text-align:center;
+    white-space:nowrap;
+  }
+  .card-number.mode-ymd .number-value,
+  .card-number.mode-ymd .number-label,
+  .card-number.mode-ymd .number-sub{
+    display:none;
+  }
+  .card-number.mode-ymd .number-ymd{
+    display:block;
+  }
+  .card-row{
+    display:flex;
+    align-items:stretch;
+  }
+  .delete-btn{
+    background:transparent;
+    border:none;
+    color:#fff;
+    opacity:.55;
+    padding:4px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    flex-shrink:0;
+    align-self:flex-start;
+    margin-left:4px;
+  }
+  .delete-btn:hover{opacity:1;}
+
+  .card-money{
+    background:rgba(0,0,0,.12);
+    padding:12px 18px 14px;
+  }
+  .money-line{
+    font-size:21px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    margin-bottom:6px;
+    font-variant-numeric:tabular-nums;
+  }
+  .money-caption{
+    font-size:12px;
+    font-weight:600;
+    opacity:.85;
+  }
+  .progress-track{
+    height:6px;
+    background:rgba(255,255,255,.25);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:8px;
+  }
+  .progress-fill{
+    height:100%;
+    background:#fff;
+    border-radius:4px;
+    transition:width .3s ease;
+  }
+  .status-pill{
+    display:inline-block;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    padding:4px 10px;
+    border-radius:20px;
+    background:rgba(255,255,255,.22);
+  }
+
+  @media (max-width:420px){
+    .field-row{grid-template-columns:1fr;}
+    .icon-badge{width:44px;height:44px;font-size:22px;border-radius:13px;}
+    .number-value{font-size:24px;}
+    .card-title{font-size:17px;}
+  }
+
+  .app-footer{
+    text-align:center;
+    margin-top:32px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-muted);
+    letter-spacing:.02em;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Countdown+</h1>
+  </header>
+
+  <div class="cards-grid" id="cardsGrid"></div>
+
+  <button type="button" id="toggleFormBtn" class="primary add-toggle">+ Nouveau compte à rebours</button>
+
+  <div class="form-panel" id="formPanel" style="display:none;">
+    <div class="segmented">
+      <button type="button" id="tabSimple" class="active">Échéance</button>
+      <button type="button" id="tabCredit">Crédit immobilier</button>
+    </div>
+
+    <form id="addForm">
+      <div class="field-row single">
+        <div class="field">
+          <label for="titleInput">Titre</label>
+          <input type="text" id="titleInput" placeholder="Ex. Départ en vacances" required>
+        </div>
+      </div>
+
+      <div class="field-row single">
+        <div class="field">
+          <label>Couleur de la vignette</label>
+          <div class="color-swatches" id="colorSwatches"></div>
+        </div>
+      </div>
+
+      <div class="field-row single">
+        <div class="field">
+          <label>Icône</label>
+          <div class="icon-swatches" id="iconSwatches"></div>
+        </div>
+      </div>
+
+      <div class="field-row" id="simpleFields">
+        <div class="field">
+          <label for="endDateOnlyText">Date de fin</label>
+          <div class="date-input-wrap">
+            <input type="text" id="endDateOnlyText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
+            <button type="button" class="calendar-btn" data-hidden="endDateOnlyHidden" aria-label="Choisir dans le calendrier">📅</button>
+            <input type="date" id="endDateOnlyHidden" class="hidden-picker" tabindex="-1" aria-hidden="true">
+          </div>
+        </div>
+        <div class="field">
+          <label for="endTimeText">Heure de fin</label>
+          <div class="date-input-wrap">
+            <input type="text" id="endTimeText" placeholder="HH:MM" inputmode="numeric" autocomplete="off">
+            <button type="button" class="calendar-btn" data-hidden="endTimeHidden" aria-label="Choisir l'heure">🕐</button>
+            <input type="time" id="endTimeHidden" class="hidden-picker" tabindex="-1" aria-hidden="true">
+          </div>
+        </div>
+      </div>
+
+      <div class="field-row credit-fields" id="creditFields">
+        <div class="field">
+          <label for="amountInput">Montant emprunté (€)</label>
+          <input type="number" id="amountInput" min="0" step="0.01" placeholder="250000">
+        </div>
+        <div class="field">
+          <label for="rateInput">Taux annuel (%)</label>
+          <input type="number" id="rateInput" min="0" step="0.01" placeholder="3.5">
+        </div>
+        <div class="field">
+          <label for="startDateText">Date de départ</label>
+          <div class="date-input-wrap">
+            <input type="text" id="startDateText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
+            <button type="button" class="calendar-btn" data-hidden="startDateHidden" aria-label="Choisir dans le calendrier">📅</button>
+            <input type="date" id="startDateHidden" class="hidden-picker" tabindex="-1" aria-hidden="true">
+          </div>
+        </div>
+        <div class="field">
+          <label for="creditEndDateText">Date de fin</label>
+          <div class="date-input-wrap">
+            <input type="text" id="creditEndDateText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
+            <button type="button" class="calendar-btn" data-hidden="creditEndDateHidden" aria-label="Choisir dans le calendrier">📅</button>
+            <input type="date" id="creditEndDateHidden" class="hidden-picker" tabindex="-1" aria-hidden="true">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-error" id="formError">Merci de compléter les champs requis.</div>
+
+      <div class="submit-row">
+        <button type="button" id="cancelFormBtn" class="secondary">Annuler</button>
+        <button type="submit" class="primary">Ajouter</button>
+      </div>
+    </form>
+  </div>
+
+  <footer class="app-footer">Designed by Mienos</footer>
+
+  <div class="confirm-backdrop" id="confirmBackdrop" style="display:none;">
+    <div class="confirm-box">
+      <p class="confirm-text" id="confirmText"></p>
+      <div class="confirm-actions">
+        <button type="button" id="confirmCancelBtn" class="confirm-cancel-btn">Annuler</button>
+        <button type="button" id="confirmOkBtn" class="confirm-danger-btn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+(function(){
+  // Filet de sécurité : bloque le pincement (pinch-zoom) sur les navigateurs
+  // qui ignorent user-scalable=no, et le double-tap-zoom résiduel.
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('gesturechange', (e) => e.preventDefault());
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if(now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, {passive:false});
+
+  const STORAGE_KEY = 'countdowns:list';
+  let items = [];
+
+  const cardsGrid = document.getElementById('cardsGrid');
+  const tabSimple = document.getElementById('tabSimple');
+  const tabCredit = document.getElementById('tabCredit');
+  const simpleFields = document.getElementById('simpleFields');
+  const creditFields = document.getElementById('creditFields');
+  const form = document.getElementById('addForm');
+  const formError = document.getElementById('formError');
+  const formPanel = document.getElementById('formPanel');
+  const toggleFormBtn = document.getElementById('toggleFormBtn');
+  const cancelFormBtn = document.getElementById('cancelFormBtn');
+  const colorSwatchesEl = document.getElementById('colorSwatches');
+  const iconSwatchesEl = document.getElementById('iconSwatches');
+  const submitBtn = document.querySelector('.submit-row button.primary');
+  let selectedColorIndex = 0;
+  let selectedIconIndex = 0;
+  let editingId = null;
+
+  function openForm(){
+    formPanel.style.display = 'block';
+    toggleFormBtn.style.display = 'none';
+    formPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  function closeForm(){
+    formPanel.style.display = 'none';
+    toggleFormBtn.style.display = 'block';
+    form.reset();
+    setType('simple');
+    formError.style.display = 'none';
+    if(!editingId){
+      selectedColorIndex = (selectedColorIndex + 1) % PALETTE.length;
+      selectedIconIndex = (selectedIconIndex + 1) % ICONS_ALL.length;
+    }
+    editingId = null;
+    submitBtn.textContent = 'Ajouter';
+    renderColorSwatches();
+    renderIconSwatches();
+  }
+
+  function openEditForm(item){
+    editingId = item.id;
+    selectedColorIndex = typeof item.colorIndex === 'number' ? item.colorIndex : 0;
+    renderColorSwatches();
+    const iconIdx = item.icon ? ICONS_ALL.indexOf(item.icon) : -1;
+    selectedIconIndex = iconIdx !== -1 ? iconIdx : 0;
+    renderIconSwatches();
+    document.getElementById('titleInput').value = item.title;
+
+    if(item.type === 'simple'){
+      setType('simple');
+      const d = new Date(item.endDate);
+      document.getElementById('endDateOnlyText').value = formatFRDate(d);
+      document.getElementById('endTimeText').value = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    } else {
+      setType('credit');
+      document.getElementById('amountInput').value = item.amount;
+      document.getElementById('rateInput').value = item.rate;
+      document.getElementById('startDateText').value = formatFRDate(new Date(item.startDate));
+      document.getElementById('creditEndDateText').value = formatFRDate(new Date(item.endDate));
+    }
+
+    submitBtn.textContent = 'Enregistrer';
+    openForm();
+  }
+
+  toggleFormBtn.addEventListener('click', openForm);
+  cancelFormBtn.addEventListener('click', closeForm);
+
+  let currentType = 'simple';
+  tabSimple.addEventListener('click', () => setType('simple'));
+  tabCredit.addEventListener('click', () => setType('credit'));
+
+  function setType(t){
+    currentType = t;
+    tabSimple.classList.toggle('active', t === 'simple');
+    tabCredit.classList.toggle('active', t === 'credit');
+    simpleFields.style.display = t === 'simple' ? 'grid' : 'none';
+    creditFields.classList.toggle('visible', t === 'credit');
+    formError.style.display = 'none';
+  }
+
+  // ---- Palette (vivid, cycling per card) ----
+  const PALETTE = [
+    {main:'#4C9F52', dark:'#3D7F43'},
+    {main:'#3E7DEA', dark:'#2F63BD'},
+    {main:'#EFA23A', dark:'#CF8726'},
+    {main:'#8B5CF6', dark:'#6D3FD1'},
+    {main:'#EF5B5B', dark:'#C94848'},
+    {main:'#2CA6A4', dark:'#1F8482'}
+  ];
+  const ICONS_SIMPLE = ['📅','⏳','📌','🎯','✈️','🎉'];
+  const ICONS_CREDIT = ['🏠','🏢','🏡'];
+  const ICONS_ALL = ['📅','⏳','⏰','🎯','📌','✈️','🎉','🎓','💍','👶','🎂','🚀','🏠','🏢','🏡','💰','💵','🛄'];
+
+  function hashStr(s){
+    let h = 0;
+    for(let i=0;i<s.length;i++){ h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+    return h;
+  }
+  function colorFor(item){
+    if(typeof item.colorIndex === 'number' && PALETTE[item.colorIndex]) return PALETTE[item.colorIndex];
+    return PALETTE[hashStr(item.id) % PALETTE.length];
+  }
+  function iconFor(item){
+    if(item.icon) return item.icon;
+    const list = item.type === 'credit' ? ICONS_CREDIT : ICONS_SIMPLE;
+    return list[hashStr(item.id + 'icon') % list.length];
+  }
+
+  function renderIconSwatches(){
+    iconSwatchesEl.innerHTML = ICONS_ALL.map((ic, i) =>
+      '<button type="button" class="icon-swatch' + (i === selectedIconIndex ? ' selected' : '') +
+      '" data-icon-index="' + i + '" aria-label="Icône ' + (i + 1) + '">' + ic + '</button>'
+    ).join('');
+    iconSwatchesEl.querySelectorAll('.icon-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedIconIndex = parseInt(btn.getAttribute('data-icon-index'), 10);
+        renderIconSwatches();
+      });
+    });
+  }
+  renderIconSwatches();
+
+  function renderColorSwatches(){
+    colorSwatchesEl.innerHTML = PALETTE.map((c, i) =>
+      '<button type="button" class="color-swatch' + (i === selectedColorIndex ? ' selected' : '') +
+      '" style="background:' + c.main + ';" data-color-index="' + i + '" aria-label="Couleur ' + (i + 1) + '"></button>'
+    ).join('');
+    colorSwatchesEl.querySelectorAll('.color-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedColorIndex = parseInt(btn.getAttribute('data-color-index'), 10);
+        renderColorSwatches();
+      });
+    });
+  }
+  renderColorSwatches();
+
+  // ---- Persistence (stockage local du navigateur) ----
+  function loadItems(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      items = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      items = [];
+    }
+    render();
+  }
+
+  function saveItems(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }catch(e){
+      console.error('Erreur de sauvegarde', e);
+    }
+  }
+
+  // ---- Saisie de date libre (JJ/MM/AAAA) + heure (HH:MM) + synchro avec le sélecteur caché ----
+  function pad2(n){ return String(n).padStart(2, '0'); }
+
+  function parseFRDate(str){
+    const m = String(str).trim().match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);
+    if(!m) return null;
+    const day = +m[1], month = +m[2], year = +m[3];
+    const d = new Date(year, month - 1, day);
+    if(d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    return d;
+  }
+
+  function parseFRTime(str){
+    const m = String(str).trim().match(/^(\d{1,2}):(\d{2})$/);
+    if(!m) return null;
+    const hh = +m[1], mm = +m[2];
+    if(hh > 23 || mm > 59) return null;
+    return {hh, mm};
+  }
+
+  function formatFRDate(d){
+    return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear();
+  }
+
+  function formatFRTime(d){
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function applyDateMask(raw){
+    const digits = String(raw).replace(/\D/g, '').slice(0, 8);
+    let out = '';
+    for(let i = 0; i < digits.length; i++){
+      if(i === 2 || i === 4) out += '/';
+      out += digits[i];
+    }
+    return out;
+  }
+
+  function applyTimeMask(raw){
+    const digits = String(raw).replace(/\D/g, '').slice(0, 4);
+    let out = '';
+    for(let i = 0; i < digits.length; i++){
+      if(i === 2) out += ':';
+      out += digits[i];
+    }
+    return out;
+  }
+
+  // Même composant de saisie de date (texte masqué JJ/MM/AAAA + icône calendrier) partout
+  function setupDatePicker(textId, hiddenId){
+    const textEl = document.getElementById(textId);
+    const hiddenEl = document.getElementById(hiddenId);
+    const btn = document.querySelector('[data-hidden="' + hiddenId + '"]');
+
+    btn.addEventListener('click', () => {
+      if(typeof hiddenEl.showPicker === 'function'){
+        try{ hiddenEl.showPicker(); return; }catch(e){}
+      }
+      hiddenEl.focus();
+      hiddenEl.click();
+    });
+
+    hiddenEl.addEventListener('change', () => {
+      if(!hiddenEl.value) return;
+      const [y, m, day] = hiddenEl.value.split('-').map(Number);
+      textEl.value = formatFRDate(new Date(y, m - 1, day));
+      textEl.classList.remove('invalid');
+    });
+
+    textEl.addEventListener('input', () => {
+      textEl.classList.remove('invalid');
+      textEl.value = applyDateMask(textEl.value);
+      const len = textEl.value.length;
+      textEl.setSelectionRange(len, len);
+    });
+  }
+
+  // Même principe pour l'heure (texte masqué HH:MM + icône horloge)
+  function setupTimePicker(textId, hiddenId){
+    const textEl = document.getElementById(textId);
+    const hiddenEl = document.getElementById(hiddenId);
+    const btn = document.querySelector('[data-hidden="' + hiddenId + '"]');
+
+    btn.addEventListener('click', () => {
+      if(typeof hiddenEl.showPicker === 'function'){
+        try{ hiddenEl.showPicker(); return; }catch(e){}
+      }
+      hiddenEl.focus();
+      hiddenEl.click();
+    });
+
+    hiddenEl.addEventListener('change', () => {
+      if(!hiddenEl.value) return;
+      const [hh, mm] = hiddenEl.value.split(':').map(Number);
+      textEl.value = pad2(hh) + ':' + pad2(mm);
+      textEl.classList.remove('invalid');
+    });
+
+    textEl.addEventListener('input', () => {
+      textEl.classList.remove('invalid');
+      textEl.value = applyTimeMask(textEl.value);
+      const len = textEl.value.length;
+      textEl.setSelectionRange(len, len);
+    });
+  }
+
+  setupDatePicker('endDateOnlyText', 'endDateOnlyHidden');
+  setupTimePicker('endTimeText', 'endTimeHidden');
+  setupDatePicker('startDateText', 'startDateHidden');
+  setupDatePicker('creditEndDateText', 'creditEndDateHidden');
+
+  // ---- Form submit (création ou édition) ----
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const title = document.getElementById('titleInput').value.trim();
+    if(!title){ showError('Merci de saisir un titre.'); return; }
+
+    let fields;
+
+    if(currentType === 'simple'){
+      const dateText = document.getElementById('endDateOnlyText');
+      const timeText = document.getElementById('endTimeText');
+      const datePart = parseFRDate(dateText.value);
+      if(!datePart){
+        dateText.classList.add('invalid');
+        showError('Merci de saisir une date de fin valide (JJ/MM/AAAA).');
+        return;
+      }
+      let hh = 0, mm = 0;
+      if(timeText.value.trim() !== ''){
+        const timePart = parseFRTime(timeText.value);
+        if(!timePart){
+          timeText.classList.add('invalid');
+          showError('Merci de saisir une heure valide (HH:MM), ou laissez vide pour 00:00.');
+          return;
+        }
+        hh = timePart.hh; mm = timePart.mm;
+      }
+      const end = new Date(datePart.getFullYear(), datePart.getMonth(), datePart.getDate(), hh, mm);
+      fields = {
+        type: 'simple',
+        title,
+        colorIndex: selectedColorIndex,
+        icon: ICONS_ALL[selectedIconIndex],
+        endDate: end.toISOString()
+      };
+    } else {
+      const amount = parseFloat(document.getElementById('amountInput').value);
+      const rate = parseFloat(document.getElementById('rateInput').value);
+      const startText = document.getElementById('startDateText');
+      const endText = document.getElementById('creditEndDateText');
+      const start = parseFRDate(startText.value);
+      const end = parseFRDate(endText.value);
+
+      if(!amount || amount <= 0 || isNaN(rate) || rate < 0 || !start || !end){
+        if(!start) startText.classList.add('invalid');
+        if(!end) endText.classList.add('invalid');
+        showError('Merci de compléter montant, taux et les deux dates (JJ/MM/AAAA).');
+        return;
+      }
+      if(end <= start){
+        endText.classList.add('invalid');
+        showError('La date de fin doit être après la date de départ.');
+        return;
+      }
+      const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59);
+      fields = {
+        type: 'credit',
+        title,
+        amount,
+        rate,
+        colorIndex: selectedColorIndex,
+        icon: ICONS_ALL[selectedIconIndex],
+        startDate: start.toISOString(),
+        endDate: endOfDay.toISOString()
+      };
+    }
+
+    if(editingId){
+      const idx = items.findIndex(i => i.id === editingId);
+      if(idx !== -1){
+        items[idx] = Object.assign({id: items[idx].id, createdAt: items[idx].createdAt}, fields);
+      }
+    } else {
+      items.push(Object.assign({id: cryptoId(), createdAt: new Date().toISOString()}, fields));
+    }
+
+    saveItems();
+    render();
+    closeForm();
+  });
+
+  function showError(msg){
+    formError.textContent = msg;
+    formError.style.display = 'block';
+  }
+
+  function cryptoId(){
+    return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+  }
+
+  function removeItem(id){
+    items = items.filter(it => it.id !== id);
+    saveItems();
+    render();
+  }
+
+  // ---- Boîte de confirmation personnalisée (window.confirm est bloqué dans certains aperçus) ----
+  const confirmBackdrop = document.getElementById('confirmBackdrop');
+  const confirmText = document.getElementById('confirmText');
+  const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+  const confirmOkBtn = document.getElementById('confirmOkBtn');
+  let confirmResolve = null;
+
+  function askConfirm(message){
+    return new Promise(resolve => {
+      confirmText.textContent = message;
+      confirmBackdrop.style.display = 'flex';
+      confirmResolve = resolve;
+    });
+  }
+  function closeConfirm(result){
+    confirmBackdrop.style.display = 'none';
+    const resolve = confirmResolve;
+    confirmResolve = null;
+    if(resolve) resolve(result);
+  }
+  confirmCancelBtn.addEventListener('click', () => closeConfirm(false));
+  confirmOkBtn.addEventListener('click', () => closeConfirm(true));
+  confirmBackdrop.addEventListener('click', (e) => {
+    if(e.target === confirmBackdrop) closeConfirm(false);
+  });
+
+  // ---- Appui long sur une vignette : icônes Modifier / Supprimer + contour de sélection ----
+  let selectedCardEl = null;
+  let selectedItemId = null;
+
+  function selectCard(cardEl, item){
+    if(selectedCardEl && selectedCardEl !== cardEl) selectedCardEl.classList.remove('selected');
+    cardEl.classList.add('selected');
+    selectedCardEl = cardEl;
+    selectedItemId = item.id;
+  }
+
+  function deselectCard(){
+    if(selectedCardEl) selectedCardEl.classList.remove('selected');
+    selectedCardEl = null;
+    selectedItemId = null;
+  }
+
+  document.addEventListener('click', (e) => {
+    if(selectedCardEl && !selectedCardEl.contains(e.target)){
+      deselectCard();
+    }
+  });
+
+  function attachLongPress(cardEl, item){
+    let timer = null;
+    const LONG_PRESS_MS = 500;
+
+    const start = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if(navigator.vibrate) navigator.vibrate(10);
+        selectCard(cardEl, item);
+      }, LONG_PRESS_MS);
+    };
+    const cancel = () => { clearTimeout(timer); };
+
+    cardEl.addEventListener('touchstart', start, {passive:true});
+    cardEl.addEventListener('touchend', cancel);
+    cardEl.addEventListener('touchmove', cancel);
+    cardEl.addEventListener('touchcancel', cancel);
+    cardEl.addEventListener('mousedown', start);
+    cardEl.addEventListener('mouseup', cancel);
+    cardEl.addEventListener('mouseleave', cancel);
+    cardEl.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    const editBtn = cardEl.querySelector('.edit-action');
+    const deleteBtn = cardEl.querySelector('.delete-action');
+
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deselectCard();
+      openEditForm(item);
+    });
+
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      deselectCard();
+      const ok = await askConfirm('Supprimer « ' + item.title + ' » ?');
+      if(ok){
+        removeItem(item.id);
+      }
+    });
+  }
+
+  // ---- Duration math ----
+  function splitDuration(ms){
+    if(ms < 0) ms = 0;
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return {days, hours, minutes, seconds};
+  }
+
+  function pad(n, len){
+    return String(n).padStart(len, '0');
+  }
+
+  // ---- Credit amortization (calé sur les échéances calendaires réelles) ----
+  function addMonthsClamped(date, months){
+    const d = new Date(date.getTime());
+    const day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    const lastDayOfTarget = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, lastDayOfTarget));
+    return d;
+  }
+
+  // Cache des échéanciers calculés par item (recalculé si dates/montant/taux changent)
+  const scheduleCache = new Map();
+
+  function buildSchedule(item){
+    const cacheKey = item.id + '|' + item.amount + '|' + item.rate + '|' + item.startDate + '|' + item.endDate;
+    const cached = scheduleCache.get(item.id);
+    if(cached && cached.key === cacheKey) return cached;
+
+    const start = new Date(item.startDate);
+    const end = new Date(item.endDate);
+    const startMs = start.getTime();
+    const endMs = end.getTime();
+    const amount = item.amount;
+    const annualRate = item.rate;
+    const avgMonthMs = 1000 * 60 * 60 * 24 * 30.4368;
+
+    // Nombre de mensualités : nombre de mois calendaires réels entre le départ et la fin
+    let n = Math.max(1, Math.round((endMs - startMs) / avgMonthMs));
+
+    // Construit les dates d'échéance sur le même quantième que la date de départ,
+    // comme dans un vrai échéancier bancaire (ex. le 07 de chaque mois).
+    let boundaries = [startMs];
+    for(let k = 1; k < n; k++){
+      boundaries.push(addMonthsClamped(start, k).getTime());
+    }
+    boundaries.push(endMs);
+
+    // Si l'estimation du nombre de mois était trop haute (dernier palier calendaire
+    // dépasse déjà la date de fin), on retire les paliers en trop.
+    while(boundaries.length > 2 && boundaries[boundaries.length - 2] >= endMs){
+      boundaries.splice(boundaries.length - 2, 1);
+      n = boundaries.length - 1;
+    }
+
+    const r = (annualRate / 100) / 12;
+    let monthly;
+    if(r > 0){
+      monthly = amount * r / (1 - Math.pow(1 + r, -n));
+    } else {
+      monthly = amount / n;
+    }
+
+    function balanceAt(k){
+      if(k <= 0) return amount;
+      if(k >= n) return 0;
+      if(r > 0){
+        const b = amount * Math.pow(1 + r, k) - monthly * ((Math.pow(1 + r, k) - 1) / r);
+        return Math.max(0, b);
+      } else {
+        return Math.max(0, amount - k * monthly);
+      }
+    }
+
+    const balances = [];
+    for(let k = 0; k <= n; k++) balances.push(balanceAt(k));
+
+    const schedule = {key: cacheKey, n, boundaries, balances, monthly, startMs, endMs};
+    scheduleCache.set(item.id, schedule);
+    return schedule;
+  }
+
+  function creditState(item, now){
+    const amount = item.amount;
+    const schedule = buildSchedule(item);
+    const {n, boundaries, balances, monthly, startMs, endMs} = schedule;
+
+    if(now <= startMs){
+      return {remaining: amount, progress: 0, notStarted: true, finished:false, monthly};
+    }
+    if(now >= endMs){
+      return {remaining: 0, progress: 1, notStarted:false, finished:true, monthly};
+    }
+
+    // Recherche du palier mensuel courant
+    let k = 0;
+    while(k < n - 1 && boundaries[k + 1] <= now) k++;
+    const segStart = boundaries[k];
+    const segEnd = boundaries[k + 1];
+    const frac = segEnd > segStart ? (now - segStart) / (segEnd - segStart) : 0;
+    const remaining = balances[k] + (balances[k + 1] - balances[k]) * frac;
+    const progress = (now - startMs) / (endMs - startMs);
+
+    return {remaining: Math.max(0, remaining), progress, notStarted:false, finished:false, monthly};
+  }
+
+  const moneyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:5, maximumFractionDigits:5});
+  const eurFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // ---- Render ----
+  function render(){
+    if(items.length === 0){
+      cardsGrid.innerHTML = '';
+      return;
+    }
+
+    const sorted = [...items].sort((a,b) => new Date(a.endDate) - new Date(b.endDate));
+
+    cardsGrid.innerHTML = sorted.map(item => {
+      const color = colorFor(item);
+      const icon = iconFor(item);
+      if(item.type === 'simple'){
+        return `
+        <div class="card" data-id="${item.id}" data-type="simple" style="background:${color.main};">
+          <div class="card-actions">
+            <button type="button" class="card-action-btn edit-action" aria-label="Modifier">✏️</button>
+            <button type="button" class="card-action-btn delete-action" aria-label="Supprimer">🗑️</button>
+          </div>
+          <div class="card-row">
+            <div class="card-main" style="flex:1;">
+              <div class="icon-badge">${icon}</div>
+              <div class="card-text">
+                <p class="card-title">${escapeHtml(item.title)}</p>
+                <span class="card-sub">${formatDate(item.endDate)}</span>
+              </div>
+            </div>
+            <div class="card-number" style="background:${color.dark};" data-number>
+              <div class="number-value" data-value>—</div>
+              <div class="number-label">jours</div>
+              <div class="number-sub" data-sub></div>
+              <div class="number-ymd" data-ymd></div>
+            </div>
+          </div>
+        </div>`;
+      } else {
+        return `
+        <div class="card" data-id="${item.id}" data-type="credit" style="background:${color.main};">
+          <div class="card-actions">
+            <button type="button" class="card-action-btn edit-action" aria-label="Modifier">✏️</button>
+            <button type="button" class="card-action-btn delete-action" aria-label="Supprimer">🗑️</button>
+          </div>
+          <div class="card-row">
+            <div class="card-main" style="flex:1;">
+              <div class="icon-badge">${icon}</div>
+              <div class="card-text">
+                <p class="card-title">${escapeHtml(item.title)}</p>
+                <span class="card-sub">${formatDate(item.endDate)}</span>
+              </div>
+            </div>
+            <div class="card-number" style="background:${color.dark};" data-number>
+              <div class="number-value" data-value>—</div>
+              <div class="number-label">jours</div>
+              <div class="number-sub" data-sub></div>
+              <div class="number-ymd" data-ymd></div>
+            </div>
+          </div>
+          <div class="card-money" style="background:${color.dark};">
+            <div class="money-line" data-money>— €</div>
+            <div class="progress-track"><div class="progress-fill" data-progress></div></div>
+            <div class="money-caption" data-caption>Estimation indicative, hors assurance et frais.</div>
+          </div>
+        </div>`;
+      }
+    }).join('');
+
+    cardsGrid.querySelectorAll('.card').forEach(cardEl => {
+      const item = items.find(i => i.id === cardEl.getAttribute('data-id'));
+      if(item) attachLongPress(cardEl, item);
+      const numberEl = cardEl.querySelector('[data-number]');
+      numberEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        numberEl.classList.toggle('mode-ymd');
+        tick();
+      });
+    });
+
+    cardsGrid.querySelectorAll('.card-title').forEach(fitCardTitle);
+
+    tick();
+  }
+
+  // Réduit la taille de police d'un titre trop long pour qu'il tienne sur une
+  // seule ligne sans déformer la vignette (l'ellipse CSS reste le filet de sécurité).
+  function fitCardTitle(el){
+    const min = 12;
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    el.style.fontSize = '';
+    if(el.scrollWidth <= el.clientWidth + 1) return;
+    let size = base;
+    while(el.scrollWidth > el.clientWidth && size > min){
+      size -= 1;
+      el.style.fontSize = size + 'px';
+    }
+  }
+
+  function escapeHtml(s){
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function formatDate(iso){
+    const d = new Date(iso);
+    let s = d.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // ---- Tick loop ----
+  function diffYMD(from, to){
+    let years = to.getFullYear() - from.getFullYear();
+    let months = to.getMonth() - from.getMonth();
+    let days = to.getDate() - from.getDate();
+    if(days < 0){
+      months -= 1;
+      const prevMonthLastDay = new Date(to.getFullYear(), to.getMonth(), 0).getDate();
+      days += prevMonthLastDay;
+    }
+    if(months < 0){
+      years -= 1;
+      months += 12;
+    }
+    return {years, months, days};
+  }
+
+  function formatYMD(y, m, d, hh, mm, ss){
+    return y + (y > 1 ? ' ans' : ' an') + '<br>' + m + ' mois<br>' + d + ' jrs<br>' + pad(hh,2) + ':' + pad(mm,2) + ':' + pad(ss,2);
+  }
+
+  function tick(){
+    const now = Date.now();
+    document.querySelectorAll('.card').forEach(card => {
+      const id = card.getAttribute('data-id');
+      const item = items.find(i => i.id === id);
+      if(!item) return;
+      const valueEl = card.querySelector('[data-value]');
+      const subEl = card.querySelector('[data-sub]');
+      const ymdEl = card.querySelector('[data-ymd]');
+      const numberEl = card.querySelector('[data-number]');
+      const isYMD = numberEl.classList.contains('mode-ymd');
+
+      if(item.type === 'simple'){
+        const end = new Date(item.endDate).getTime();
+        const remainingMs = end - now;
+        const {days, hours, minutes, seconds} = splitDuration(remainingMs);
+        if(remainingMs <= 0){
+          valueEl.textContent = '0';
+          subEl.textContent = 'terminé';
+          ymdEl.textContent = 'terminé';
+        } else {
+          valueEl.textContent = days;
+          subEl.textContent = pad(hours,2) + ':' + pad(minutes,2) + ':' + pad(seconds,2);
+          if(isYMD){
+            const ymd = diffYMD(new Date(now), new Date(end));
+            ymdEl.innerHTML = formatYMD(ymd.years, ymd.months, ymd.days, hours, minutes, seconds);
+          }
+        }
+      } else {
+        const end = new Date(item.endDate).getTime();
+        const remainingMs = end - now;
+        const {days, hours, minutes, seconds} = splitDuration(remainingMs);
+        if(remainingMs <= 0){
+          valueEl.textContent = '0';
+          subEl.textContent = 'soldé';
+          ymdEl.textContent = 'soldé';
+        } else {
+          valueEl.textContent = days;
+          subEl.textContent = pad(hours,2) + ':' + pad(minutes,2) + ':' + pad(seconds,2);
+          if(isYMD){
+            const ymd = diffYMD(new Date(now), new Date(end));
+            ymdEl.innerHTML = formatYMD(ymd.years, ymd.months, ymd.days, hours, minutes, seconds);
+          }
+        }
+
+        const state = creditState(item, now);
+        const progressEl = card.querySelector('[data-progress]');
+        const moneyEl = card.querySelector('[data-money]');
+        const captionEl = card.querySelector('[data-caption]');
+        progressEl.style.width = (state.progress * 100) + '%';
+        if(state.notStarted){
+          moneyEl.textContent = moneyFormatter.format(item.amount) + ' €';
+          captionEl.textContent = 'Le crédit n\'a pas encore démarré.';
+        } else if(state.finished){
+          moneyEl.textContent = moneyFormatter.format(0) + ' €';
+          captionEl.textContent = 'Crédit soldé.';
+        } else {
+          moneyEl.textContent = moneyFormatter.format(state.remaining) + ' €';
+          captionEl.textContent = 'Reste dû, estimation (mensualité ≈ ' + eurFormatter.format(state.monthly) + ' €), hors assurance et frais.';
+        }
+      }
+    });
+  }
+
+  setType('simple');
+  loadItems();
+  setInterval(tick, 100);
+})();
+</script>
+</body>
+</html>
