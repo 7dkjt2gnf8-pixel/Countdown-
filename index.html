@@ -497,13 +497,6 @@
     font-variant-numeric:tabular-nums;
     opacity:.95;
   }
-  .interest-line{
-    font-size:13px;
-    font-weight:700;
-    margin-bottom:6px;
-    font-variant-numeric:tabular-nums;
-    opacity:.95;
-  }
   .progress-track{
     height:6px;
     background:rgba(255,255,255,.25);
@@ -1293,7 +1286,6 @@
             <div class="money-line" data-money>— €</div>
             <div class="progress-track"><div class="progress-fill" data-progress></div></div>
             <div class="repaid-today" data-repaid-today></div>
-            <div class="interest-line" data-interest></div>
             <div class="money-caption" data-caption>Estimation indicative, hors assurance et frais.</div>
           </div>
         </div>`;
@@ -1360,7 +1352,8 @@
   }
 
   function formatYMD(y, m, d, hh, mm, ss){
-    return y + (y > 1 ? ' ans' : ' an') + '<br>' + m + ' mois<br>' + d + ' jrs<br>' + pad(hh,2) + ':' + pad(mm,2) + ':' + pad(ss,2);
+    const yearLine = y > 0 ? (y + (y > 1 ? ' ans' : ' an') + '<br>') : '';
+    return yearLine + m + ' mois<br>' + d + ' jrs<br>' + pad(hh,2) + ':' + pad(mm,2) + ':' + pad(ss,2);
   }
 
   function tick(){
@@ -1413,18 +1406,15 @@
         const moneyEl = card.querySelector('[data-money]');
         const captionEl = card.querySelector('[data-caption]');
         const repaidTodayEl = card.querySelector('[data-repaid-today]');
-        const interestEl = card.querySelector('[data-interest]');
         progressEl.style.width = (state.progress * 100) + '%';
         if(state.notStarted){
           moneyEl.textContent = moneyFormatter.format(item.amount) + ' €';
           captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
           repaidTodayEl.textContent = '';
-          interestEl.textContent = 'Intérêts payés : ' + moneyFormatter.format(0) + ' € / ' + eurFormatter.format(state.totalInterest) + '€';
         } else if(state.finished){
           moneyEl.textContent = moneyFormatter.format(0) + ' €';
           captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
           repaidTodayEl.textContent = '';
-          interestEl.textContent = 'Intérêts payés : ' + moneyFormatter.format(state.totalInterest) + ' € / ' + eurFormatter.format(state.totalInterest) + '€';
         } else {
           moneyEl.textContent = moneyFormatter.format(state.remaining) + ' €';
           captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
@@ -1436,7 +1426,6 @@
           const repaidToday = Math.max(0, stateStartOfDay.remaining - state.remaining);
           const totalToday = Math.max(0, stateStartOfDay.remaining - stateEndOfDay.remaining);
           repaidTodayEl.textContent = 'Remboursé aujourd\'hui : ' + moneyFormatter.format(repaidToday) + ' € / ' + eurFormatter.format(totalToday) + '€';
-          interestEl.textContent = 'Intérêts payés : ' + moneyFormatter.format(state.interestPaid) + ' € / ' + eurFormatter.format(state.totalInterest) + '€';
         }
       }
     });
