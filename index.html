@@ -497,6 +497,13 @@
     font-variant-numeric:tabular-nums;
     opacity:.95;
   }
+  .repaid-month{
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+    font-variant-numeric:tabular-nums;
+    opacity:.95;
+  }
   .progress-track{
     height:6px;
     background:rgba(255,255,255,.25);
@@ -1286,6 +1293,7 @@
             <div class="money-line" data-money>— €</div>
             <div class="progress-track"><div class="progress-fill" data-progress></div></div>
             <div class="repaid-today" data-repaid-today></div>
+            <div class="repaid-month" data-repaid-month></div>
             <div class="money-caption" data-caption>Estimation indicative, hors assurance et frais.</div>
           </div>
         </div>`;
@@ -1406,26 +1414,37 @@
         const moneyEl = card.querySelector('[data-money]');
         const captionEl = card.querySelector('[data-caption]');
         const repaidTodayEl = card.querySelector('[data-repaid-today]');
+        const repaidMonthEl = card.querySelector('[data-repaid-month]');
         progressEl.style.width = (state.progress * 100) + '%';
         if(state.notStarted){
           moneyEl.textContent = moneyFormatter.format(item.amount) + ' €';
           captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
           repaidTodayEl.textContent = '';
+          repaidMonthEl.textContent = '';
         } else if(state.finished){
           moneyEl.textContent = moneyFormatter.format(0) + ' €';
           captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
           repaidTodayEl.textContent = '';
+          repaidMonthEl.textContent = '';
         } else {
           moneyEl.textContent = moneyFormatter.format(state.remaining) + ' €';
           captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
           const startOfToday = new Date(now);
           startOfToday.setHours(0, 0, 0, 0);
-          const startOfTomorrow = startOfToday.getTime() + 24 * 60 * 60 * 1000;
+          const startOfTomorrow = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), startOfToday.getDate() + 1).getTime();
           const stateStartOfDay = creditState(item, startOfToday.getTime());
           const stateEndOfDay = creditState(item, startOfTomorrow);
           const repaidToday = Math.max(0, stateStartOfDay.remaining - state.remaining);
           const totalToday = Math.max(0, stateStartOfDay.remaining - stateEndOfDay.remaining);
           repaidTodayEl.textContent = 'Remboursé aujourd\'hui : ' + moneyFormatter.format(repaidToday) + ' € / ' + eurFormatter.format(totalToday) + '€';
+
+          const startOfMonth = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1).getTime();
+          const startOfNextMonth = new Date(startOfToday.getFullYear(), startOfToday.getMonth() + 1, 1).getTime();
+          const stateStartOfMonth = creditState(item, startOfMonth);
+          const stateEndOfMonth = creditState(item, startOfNextMonth);
+          const repaidMonth = Math.max(0, stateStartOfMonth.remaining - state.remaining);
+          const totalMonth = Math.max(0, stateStartOfMonth.remaining - stateEndOfMonth.remaining);
+          repaidMonthEl.textContent = 'Remboursé ce mois : ' + eurFormatter.format(repaidMonth) + '€/' + eurFormatter.format(totalMonth) + '€';
         }
       }
     });
