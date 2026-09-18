@@ -504,6 +504,13 @@
     font-variant-numeric:tabular-nums;
     opacity:.95;
   }
+  .interest-month{
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+    font-variant-numeric:tabular-nums;
+    opacity:.95;
+  }
   .progress-track{
     height:6px;
     background:rgba(255,255,255,.25);
@@ -1239,6 +1246,7 @@
 
   const moneyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:5, maximumFractionDigits:5});
   const eurFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const threeDecFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:3, maximumFractionDigits:3});
   const monthlyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1});
 
   function formatMensualite(item, monthly){
@@ -1321,6 +1329,7 @@
             <div class="progress-track"><div class="progress-fill" data-progress></div></div>
             <div class="repaid-today" data-repaid-today></div>
             <div class="repaid-month" data-repaid-month></div>
+            <div class="interest-month" data-interest-month></div>
             <div class="money-caption" data-caption>Estimation indicative, hors assurance et frais.</div>
           </div>
         </div>`;
@@ -1442,17 +1451,20 @@
         const captionEl = card.querySelector('[data-caption]');
         const repaidTodayEl = card.querySelector('[data-repaid-today]');
         const repaidMonthEl = card.querySelector('[data-repaid-month]');
+        const interestMonthEl = card.querySelector('[data-interest-month]');
         progressEl.style.width = (state.progress * 100) + '%';
         if(state.notStarted){
           moneyEl.textContent = moneyFormatter.format(item.amount) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
+          interestMonthEl.textContent = '';
         } else if(state.finished){
           moneyEl.textContent = moneyFormatter.format(0) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
+          interestMonthEl.textContent = '';
         } else {
           moneyEl.textContent = moneyFormatter.format(state.remaining) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
@@ -1471,7 +1483,13 @@
           const stateEndOfMonth = creditState(item, startOfNextMonth);
           const repaidMonth = Math.max(0, stateStartOfMonth.remaining - state.remaining);
           const totalMonth = Math.max(0, stateStartOfMonth.remaining - stateEndOfMonth.remaining);
-          repaidMonthEl.textContent = 'Remboursé ce mois : ' + eurFormatter.format(repaidMonth) + '€/' + eurFormatter.format(totalMonth) + '€';
+          repaidMonthEl.textContent = 'Remboursé ce mois : ' + threeDecFormatter.format(repaidMonth) + '€/' + threeDecFormatter.format(totalMonth) + '€';
+
+          const totalInterestMonth = Math.max(0, state.monthly - totalMonth);
+          const fractionElapsed = startOfNextMonth > startOfMonth ? (now - startOfMonth) / (startOfNextMonth - startOfMonth) : 0;
+          const totalPaidSoFarMonth = state.monthly * Math.min(1, Math.max(0, fractionElapsed));
+          const interestMonth = Math.min(totalInterestMonth, Math.max(0, totalPaidSoFarMonth - repaidMonth));
+          interestMonthEl.textContent = 'Intérêt ce mois : ' + threeDecFormatter.format(interestMonth) + '€/' + threeDecFormatter.format(totalInterestMonth) + '€';
         }
       }
     });
