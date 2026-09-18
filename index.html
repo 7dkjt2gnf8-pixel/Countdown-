@@ -1489,7 +1489,7 @@
           const fractionElapsed = startOfNextMonth > startOfMonth ? (now - startOfMonth) / (startOfNextMonth - startOfMonth) : 0;
           const totalPaidSoFarMonth = state.monthly * Math.min(1, Math.max(0, fractionElapsed));
           const interestMonth = Math.min(totalInterestMonth, Math.max(0, totalPaidSoFarMonth - repaidMonth));
-          interestMonthEl.textContent = 'Intérêt ce mois : ' + threeDecFormatter.format(interestMonth) + '€/' + threeDecFormatter.format(totalInterestMonth) + '€';
+          interestMonthEl.textContent = 'Intérêts ce mois : ' + threeDecFormatter.format(interestMonth) + '€/' + threeDecFormatter.format(totalInterestMonth) + '€';
         }
       }
     });
