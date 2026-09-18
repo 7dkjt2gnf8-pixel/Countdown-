@@ -616,6 +616,10 @@
           <input type="number" id="rateInput" min="0" step="0.01" inputmode="decimal" placeholder="3.5">
         </div>
         <div class="field">
+          <label for="insuranceInput">Assurance mensuelle (€) — facultatif</label>
+          <input type="number" id="insuranceInput" min="0" step="0.01" inputmode="decimal" placeholder="Optionnel">
+        </div>
+        <div class="field">
           <label for="startDateText">Date de départ</label>
           <div class="date-input-wrap">
             <input type="text" id="startDateText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
@@ -733,6 +737,7 @@
       setType('credit');
       document.getElementById('amountInput').value = item.amount;
       document.getElementById('rateInput').value = item.rate;
+      document.getElementById('insuranceInput').value = item.insurance ? item.insurance : '';
       document.getElementById('startDateText').value = formatFRDate(new Date(item.startDate));
       document.getElementById('creditEndDateText').value = formatFRDate(new Date(item.endDate));
     }
@@ -964,12 +969,14 @@
     } else {
       const amount = parseFloat(document.getElementById('amountInput').value);
       const rate = parseFloat(document.getElementById('rateInput').value);
+      const insuranceRaw = document.getElementById('insuranceInput').value.trim();
+      const insurance = insuranceRaw === '' ? 0 : parseFloat(insuranceRaw);
       const startText = document.getElementById('startDateText');
       const endText = document.getElementById('creditEndDateText');
       const start = parseFRDate(startText.value);
       const end = parseFRDate(endText.value);
 
-      if(!amount || amount <= 0 || isNaN(rate) || rate < 0 || !start || !end){
+      if(!amount || amount <= 0 || isNaN(rate) || rate < 0 || !start || !end || isNaN(insurance) || insurance < 0){
         if(!start) startText.classList.add('invalid');
         if(!end) endText.classList.add('invalid');
         showError('Merci de compléter montant, taux et les deux dates (JJ/MM/AAAA).');
@@ -986,6 +993,7 @@
         title,
         amount,
         rate,
+        insurance,
         colorIndex: selectedColorIndex,
         icon: ICONS_ALL[selectedIconIndex],
         startDate: start.toISOString(),
@@ -1233,6 +1241,16 @@
   const eurFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const monthlyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1});
 
+  function formatMensualite(item, monthly){
+    const insurance = item.insurance || 0;
+    const total = monthly + insurance;
+    let text = 'Mensualité = ' + monthlyFormatter.format(total) + ' €';
+    if(insurance > 0){
+      text += ' (dont ' + monthlyFormatter.format(insurance) + ' € d\'assurance)';
+    }
+    return text;
+  }
+
   // ---- Render ----
   function render(){
     if(items.length === 0){
@@ -1427,17 +1445,17 @@
         progressEl.style.width = (state.progress * 100) + '%';
         if(state.notStarted){
           moneyEl.textContent = moneyFormatter.format(item.amount) + ' €';
-          captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
+          captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
         } else if(state.finished){
           moneyEl.textContent = moneyFormatter.format(0) + ' €';
-          captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
+          captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
         } else {
           moneyEl.textContent = moneyFormatter.format(state.remaining) + ' €';
-          captionEl.textContent = 'Mensualité = ' + monthlyFormatter.format(state.monthly) + ' €';
+          captionEl.textContent = formatMensualite(item, state.monthly);
           const startOfToday = new Date(now);
           startOfToday.setHours(0, 0, 0, 0);
           const startOfTomorrow = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), startOfToday.getDate() + 1).getTime();
