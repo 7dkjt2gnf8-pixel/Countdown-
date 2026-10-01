@@ -113,9 +113,16 @@
     border:1px solid var(--border);
     border-radius:var(--radius);
     padding:20px;
-    margin-top:20px;
-    margin-bottom:24px;
-    box-shadow:0 1px 3px rgba(30,30,60,.05);
+    box-shadow:0 12px 30px rgba(0,0,0,.25);
+    width:100%;
+    max-width:420px;
+    box-sizing:border-box;
+    max-height:calc(100vh - 48px);
+    max-height:calc(100dvh - 48px);
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
   }
   .segmented{
     display:inline-flex;
@@ -693,7 +700,8 @@
 
   <div class="cards-grid" id="cardsGrid"></div>
 
-  <div class="form-panel" id="formPanel" style="display:none;">
+  <div class="confirm-backdrop" id="formBackdrop" style="display:none;">
+  <div class="form-panel" id="formPanel">
     <div class="segmented">
       <button type="button" id="tabSimple" class="active" data-i18n="tab_simple">Échéance</button>
       <button type="button" id="tabCredit" data-i18n="tab_credit">Crédit immobilier</button>
@@ -790,6 +798,7 @@
         <button type="submit" class="primary" data-i18n="btn_add">Ajouter</button>
       </div>
     </form>
+  </div>
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
@@ -954,7 +963,7 @@
     }
   };
 
-  let settings = {lang: 'fr', style: 'color'};
+  let settings = {lang: 'fr', style: 'ios'};
 
   function loadSettings(){
     try{
@@ -998,6 +1007,7 @@
   const form = document.getElementById('addForm');
   const formError = document.getElementById('formError');
   const formPanel = document.getElementById('formPanel');
+  const formBackdrop = document.getElementById('formBackdrop');
   const toggleFormBtn = document.getElementById('toggleFormBtn');
   const cancelFormBtn = document.getElementById('cancelFormBtn');
   const colorSwatchesEl = document.getElementById('colorSwatches');
@@ -1008,14 +1018,11 @@
   let editingId = null;
 
   function openForm(){
-    formPanel.style.display = 'block';
-    toggleFormBtn.style.display = 'none';
-    formPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
+    formBackdrop.style.display = 'flex';
   }
 
   function closeForm(){
-    formPanel.style.display = 'none';
-    toggleFormBtn.style.display = 'flex';
+    formBackdrop.style.display = 'none';
     form.reset();
     setType('simple');
     formError.style.display = 'none';
@@ -1058,6 +1065,9 @@
   }
 
   toggleFormBtn.addEventListener('click', openForm);
+  formBackdrop.addEventListener('click', (e) => {
+    if(e.target === formBackdrop) closeForm();
+  });
   cancelFormBtn.addEventListener('click', closeForm);
 
   let currentType = 'simple';
@@ -1076,12 +1086,12 @@
 
   // ---- Palette (vivid, cycling per card) ----
   const PALETTE = [
-    {main:'#4C9F52', dark:'#3D7F43'},
-    {main:'#3E7DEA', dark:'#2F63BD'},
-    {main:'#EFA23A', dark:'#CF8726'},
-    {main:'#8B5CF6', dark:'#6D3FD1'},
-    {main:'#EF5B5B', dark:'#C94848'},
-    {main:'#2CA6A4', dark:'#1F8482'}
+    {main:'#7C9A77', dark:'#637D5F'},
+    {main:'#6A89B8', dark:'#51699A'},
+    {main:'#CBA05C', dark:'#AC8440'},
+    {main:'#9683B5', dark:'#786998'},
+    {main:'#C17F77', dark:'#A3635C'},
+    {main:'#6FA09B', dark:'#557F7B'}
   ];
   // ---- Bibliothèque d'icônes au trait (remplace les emoji) ----
   const ICON_SVGS = {
@@ -1723,6 +1733,7 @@
     let s = d.toLocaleDateString(locale, {weekday:'short', day:'numeric', month:'short', year:'numeric'});
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
+
 
   // ---- Tick loop ----
   function diffYMD(from, to){
