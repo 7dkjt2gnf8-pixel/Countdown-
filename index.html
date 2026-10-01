@@ -36,6 +36,7 @@
     text-size-adjust:100%;
     background:var(--bg);
     height:100%;
+    overscroll-behavior-y:none;
   }
   body{
     margin:0;
@@ -49,6 +50,7 @@
     user-select:none;
     -webkit-touch-callout:none;
     -webkit-tap-highlight-color:transparent;
+    overscroll-behavior-y:none;
   }
   /* Les champs de saisie restent normalement sélectionnables/éditables */
   input, textarea{
@@ -1113,8 +1115,19 @@
       document.body.style.left = '';
       document.body.style.right = '';
       window.scrollTo(0, lockedScrollY);
+      updateScrollAvailability();
     }
   }
+
+  // N'autorise le défilement de la page que si le contenu dépasse réellement l'écran.
+  function updateScrollAvailability(){
+    if(scrollLockCount > 0) return; // une fenêtre modale gère déjà le défilement
+    const needsScroll = document.documentElement.scrollHeight > window.innerHeight + 1;
+    document.documentElement.style.overflowY = needsScroll ? '' : 'hidden';
+    document.body.style.overflowY = needsScroll ? '' : 'hidden';
+  }
+  window.addEventListener('resize', updateScrollAvailability);
+  window.addEventListener('orientationchange', () => setTimeout(updateScrollAvailability, 150));
 
   function openForm(){
     formBackdrop.style.display = 'flex';
@@ -1860,6 +1873,7 @@
   function render(){
     if(items.length === 0){
       cardsGrid.innerHTML = '';
+      updateScrollAvailability();
       return;
     }
 
@@ -1951,6 +1965,7 @@
     cardsGrid.querySelectorAll('.card-title').forEach(fitCardTitle);
 
     tick();
+    requestAnimationFrame(updateScrollAvailability);
   }
 
   // Réduit la taille de police d'un titre trop long pour qu'il tienne sur une
