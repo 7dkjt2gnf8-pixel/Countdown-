@@ -1719,7 +1719,8 @@
 
   function formatDate(iso){
     const d = new Date(iso);
-    let s = d.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+    const locale = settings.lang === 'en' ? 'en-GB' : 'fr-FR';
+    let s = d.toLocaleDateString(locale, {weekday:'short', day:'numeric', month:'short', year:'numeric'});
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
