@@ -328,10 +328,20 @@
     -webkit-user-select:none;
     user-select:none;
     -webkit-touch-callout:none;
-    transition:box-shadow .15s ease;
+    transition:box-shadow .15s ease, transform .18s ease;
   }
   .card.selected{
     box-shadow:0 0 0 3px #fff, 0 0 0 6px var(--accent), 0 10px 22px rgba(30,30,60,.28);
+  }
+  .card.lift-armed{
+    transform:scale(1.04);
+    box-shadow:0 12px 26px rgba(0,0,0,.32);
+    z-index:20;
+  }
+  .card.dragging{
+    transition:box-shadow .15s ease;
+    box-shadow:0 16px 32px rgba(0,0,0,.4);
+    z-index:50;
   }
 
   .card-actions{
@@ -455,6 +465,30 @@
     background:var(--accent);
     color:#fff;
   }
+  .sort-options{display:flex; flex-direction:column;}
+  .sort-option{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    background:transparent;
+    border:none;
+    border-top:1px solid var(--border);
+    padding:14px 2px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:600;
+    color:var(--text);
+    cursor:pointer;
+    text-align:left;
+  }
+  .sort-option:first-child{border-top:none;}
+  .sort-option .sort-check{
+    color:var(--accent);
+    opacity:0;
+    display:flex;
+  }
+  .sort-option.active .sort-check{opacity:1;}
 
   /* ---- Thème alternatif "iOS" : clair et sobre, façon réglages système ---- */
   #app.style-ios{
@@ -692,6 +726,9 @@
       <button type="button" id="toggleFormBtn" class="settings-btn" aria-label="Nouveau compte à rebours">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       </button>
+      <button type="button" id="sortBtn" class="settings-btn" aria-label="Trier">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="21" height="21"><path d="m3 16 4 4 4-4"></path><path d="M7 20V4"></path><path d="m21 8-4-4-4 4"></path><path d="M17 4v16"></path></svg>
+      </button>
       <button type="button" id="settingsBtn" class="settings-btn" aria-label="Réglages">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="21" height="21"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
@@ -828,6 +865,35 @@
     </div>
   </div>
 
+  <div class="confirm-backdrop" id="sortBackdrop" style="display:none;">
+    <div class="confirm-box settings-box">
+      <div class="settings-header">
+        <p class="settings-title" data-i18n="sort_title">Trier par</p>
+        <button type="button" id="sortCloseBtn" class="settings-close-btn" aria-label="Fermer">✕</button>
+      </div>
+      <div class="sort-options" id="sortOptions">
+        <button type="button" class="sort-option" data-sort="dateAsc">
+          <span data-i18n="sort_date_asc">Date (croissant)</span>
+          <span class="sort-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+        </button>
+        <button type="button" class="sort-option" data-sort="dateDesc">
+          <span data-i18n="sort_date_desc">Date (décroissant)</span>
+          <span class="sort-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+        </button>
+        <button type="button" class="sort-option" data-sort="manual">
+          <span data-i18n="sort_manual">Manuel</span>
+          <span class="sort-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="confirm-backdrop" id="confirmBackdrop" style="display:none;">
     <div class="confirm-box">
       <p class="confirm-text" id="confirmText"></p>
@@ -865,6 +931,10 @@
       settings_style: 'Style d\'affichage',
       settings_style_color: 'Coloré',
       settings_style_ios: 'Clair',
+      sort_title: 'Trier par',
+      sort_date_asc: 'Date (croissant)',
+      sort_date_desc: 'Date (décroissant)',
+      sort_manual: 'Manuel',
       tab_simple: 'Échéance',
       tab_credit: 'Crédit immobilier',
       label_title: 'Titre',
@@ -916,6 +986,10 @@
       settings_style: 'Display style',
       settings_style_color: 'Color',
       settings_style_ios: 'Light',
+      sort_title: 'Sort by',
+      sort_date_asc: 'Date (ascending)',
+      sort_date_desc: 'Date (descending)',
+      sort_manual: 'Manual',
       tab_simple: 'Deadline',
       tab_credit: 'Mortgage',
       label_title: 'Title',
@@ -963,7 +1037,7 @@
     }
   };
 
-  let settings = {lang: 'fr', style: 'ios'};
+  let settings = {lang: 'fr', style: 'ios', sortMode: 'manual'};
 
   function loadSettings(){
     try{
@@ -972,6 +1046,7 @@
         const parsed = JSON.parse(raw);
         if(parsed.lang === 'fr' || parsed.lang === 'en') settings.lang = parsed.lang;
         if(parsed.style === 'color' || parsed.style === 'ios') settings.style = parsed.style;
+        if(parsed.sortMode === 'dateAsc' || parsed.sortMode === 'dateDesc' || parsed.sortMode === 'manual') settings.sortMode = parsed.sortMode;
       }
     }catch(e){}
   }
@@ -1017,12 +1092,38 @@
   let selectedIconIndex = 0;
   let editingId = null;
 
+  // ---- Verrouille le scroll de l'arrière-plan pendant qu'une fenêtre modale est ouverte ----
+  let lockedScrollY = 0;
+  let scrollLockCount = 0;
+  function lockBodyScroll(){
+    if(scrollLockCount === 0){
+      lockedScrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = (-lockedScrollY) + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+    }
+    scrollLockCount++;
+  }
+  function unlockBodyScroll(){
+    scrollLockCount = Math.max(0, scrollLockCount - 1);
+    if(scrollLockCount === 0){
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      window.scrollTo(0, lockedScrollY);
+    }
+  }
+
   function openForm(){
     formBackdrop.style.display = 'flex';
+    lockBodyScroll();
   }
 
   function closeForm(){
     formBackdrop.style.display = 'none';
+    unlockBodyScroll();
     form.reset();
     setType('simple');
     formError.style.display = 'none';
@@ -1177,6 +1278,13 @@
       items = raw ? JSON.parse(raw) : [];
     }catch(e){
       items = [];
+    }
+    // Migration : attribue un ordre manuel initial basé sur le tri par échéance déjà affiché,
+    // pour que l'activation de la réorganisation manuelle ne change rien visuellement au premier chargement.
+    if(items.length && items.some(it => typeof it.order !== 'number')){
+      const dateSorted = [...items].sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
+      dateSorted.forEach((it, idx) => { it.order = idx; });
+      saveItems();
     }
     render();
   }
@@ -1358,10 +1466,11 @@
     if(editingId){
       const idx = items.findIndex(i => i.id === editingId);
       if(idx !== -1){
-        items[idx] = Object.assign({id: items[idx].id, createdAt: items[idx].createdAt}, fields);
+        items[idx] = Object.assign({id: items[idx].id, createdAt: items[idx].createdAt, order: items[idx].order}, fields);
       }
     } else {
-      items.push(Object.assign({id: cryptoId(), createdAt: new Date().toISOString()}, fields));
+      const maxOrder = items.reduce((m, i) => typeof i.order === 'number' ? Math.max(m, i.order) : m, -1);
+      items.push(Object.assign({id: cryptoId(), createdAt: new Date().toISOString(), order: maxOrder + 1}, fields));
     }
 
     saveItems();
@@ -1395,11 +1504,13 @@
     return new Promise(resolve => {
       confirmText.textContent = message;
       confirmBackdrop.style.display = 'flex';
+      lockBodyScroll();
       confirmResolve = resolve;
     });
   }
   function closeConfirm(result){
     confirmBackdrop.style.display = 'none';
+    unlockBodyScroll();
     const resolve = confirmResolve;
     confirmResolve = null;
     if(resolve) resolve(result);
@@ -1433,26 +1544,157 @@
     }
   });
 
+  const CARD_GAP = 14;
+
+  function commitReorder(cardsEls, draggedEl, finalIndex){
+    const orderedIds = cardsEls.map(el => el.getAttribute('data-id'));
+    const draggedId = draggedEl.getAttribute('data-id');
+    const fromIndex = orderedIds.indexOf(draggedId);
+    if(fromIndex === -1) return;
+    orderedIds.splice(fromIndex, 1);
+    orderedIds.splice(Math.max(0, Math.min(finalIndex, orderedIds.length)), 0, draggedId);
+    orderedIds.forEach((id, idx) => {
+      const it = items.find(i => i.id === id);
+      if(it) it.order = idx;
+    });
+    saveItems();
+    if(settings.sortMode !== 'manual'){
+      settings.sortMode = 'manual';
+      saveSettings();
+    }
+  }
+
   function attachLongPress(cardEl, item){
     let timer = null;
     const LONG_PRESS_MS = 500;
+    const MOVE_THRESHOLD = 6;
 
-    const start = () => {
+    let armed = false;
+    let dragging = false;
+    let startY = 0;
+    let originalIndex = -1;
+    let draggedStartCenter = 0;
+    let slotHeight = 0;
+    let siblings = []; // {el, origIndex, center}
+    let cardsEls = [];
+    let lastTargetIndex = -1;
+
+    function getY(e){
+      if(e.touches && e.touches.length) return e.touches[0].clientY;
+      if(e.changedTouches && e.changedTouches.length) return e.changedTouches[0].clientY;
+      return e.clientY;
+    }
+
+    function armLift(){
+      armed = true;
+      cardEl.classList.add('lift-armed');
+      if(navigator.vibrate) navigator.vibrate(10);
+      selectCard(cardEl, item);
+    }
+
+    function beginDrag(clientY){
+      dragging = true;
+      deselectCard();
+      cardEl.classList.remove('lift-armed');
+      cardEl.classList.add('dragging');
+      cardsEls = Array.from(cardsGrid.querySelectorAll('.card'));
+      originalIndex = cardsEls.indexOf(cardEl);
+      lastTargetIndex = originalIndex;
+      const rect = cardEl.getBoundingClientRect();
+      draggedStartCenter = rect.top + rect.height / 2;
+      slotHeight = rect.height + CARD_GAP;
+      startY = clientY;
+      siblings = cardsEls
+        .map((el, idx) => ({el, idx}))
+        .filter(s => s.el !== cardEl)
+        .map(s => {
+          const r = s.el.getBoundingClientRect();
+          return {el: s.el, origIndex: s.idx, center: r.top + r.height / 2};
+        });
+      siblings.forEach(s => { s.el.style.transition = 'transform .18s ease'; });
+    }
+
+    function updateDrag(clientY){
+      const deltaY = clientY - startY;
+      cardEl.style.transform = 'translateY(' + deltaY + 'px)';
+      const currentCenter = draggedStartCenter + deltaY;
+      let targetIndex = 0;
+      siblings.forEach(s => { if(s.center < currentCenter) targetIndex++; });
+      targetIndex = Math.max(0, Math.min(targetIndex, cardsEls.length - 1));
+      lastTargetIndex = targetIndex;
+
+      siblings.forEach(s => {
+        let shift = 0;
+        if(originalIndex < targetIndex && s.origIndex > originalIndex && s.origIndex <= targetIndex){
+          shift = -slotHeight;
+        } else if(originalIndex > targetIndex && s.origIndex >= targetIndex && s.origIndex < originalIndex){
+          shift = slotHeight;
+        }
+        s.el.style.transform = shift ? 'translateY(' + shift + 'px)' : '';
+      });
+    }
+
+    function endDrag(){
+      cardEl.classList.remove('dragging');
+      cardEl.style.transform = '';
+      siblings.forEach(s => { s.el.style.transform = ''; s.el.style.transition = ''; });
+      if(lastTargetIndex !== -1 && lastTargetIndex !== originalIndex){
+        commitReorder(cardsEls, cardEl, lastTargetIndex);
+        render();
+      }
+      dragging = false;
+      siblings = [];
+      cardsEls = [];
+    }
+
+    function reset(){
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        if(navigator.vibrate) navigator.vibrate(10);
-        selectCard(cardEl, item);
-      }, LONG_PRESS_MS);
-    };
-    const cancel = () => { clearTimeout(timer); };
+      if(dragging){
+        endDrag();
+      } else if(armed){
+        cardEl.classList.remove('lift-armed');
+      }
+      armed = false;
+    }
 
-    cardEl.addEventListener('touchstart', start, {passive:true});
-    cardEl.addEventListener('touchend', cancel);
-    cardEl.addEventListener('touchmove', cancel);
-    cardEl.addEventListener('touchcancel', cancel);
-    cardEl.addEventListener('mousedown', start);
-    cardEl.addEventListener('mouseup', cancel);
-    cardEl.addEventListener('mouseleave', cancel);
+    const onStart = (e) => {
+      clearTimeout(timer);
+      const y = getY(e);
+      timer = setTimeout(() => {
+        armLift();
+      }, LONG_PRESS_MS);
+      cardEl._dragStartY = y;
+    };
+
+    const onMove = (e) => {
+      if(!armed){
+        // Pas encore d'appui long confirmé : un mouvement annule la détection (scroll normal)
+        clearTimeout(timer);
+        return;
+      }
+      const y = getY(e);
+      if(!dragging){
+        if(Math.abs(y - cardEl._dragStartY) > MOVE_THRESHOLD){
+          beginDrag(cardEl._dragStartY);
+          updateDrag(y);
+          if(e.cancelable) e.preventDefault();
+        }
+      } else {
+        updateDrag(y);
+        if(e.cancelable) e.preventDefault();
+      }
+    };
+
+    const onEnd = () => { reset(); };
+
+    cardEl.addEventListener('touchstart', onStart, {passive:true});
+    cardEl.addEventListener('touchmove', onMove, {passive:false});
+    cardEl.addEventListener('touchend', onEnd);
+    cardEl.addEventListener('touchcancel', onEnd);
+    cardEl.addEventListener('mousedown', onStart);
+    cardEl.addEventListener('mousemove', onMove);
+    cardEl.addEventListener('mouseup', onEnd);
+    cardEl.addEventListener('mouseleave', () => { if(!armed) clearTimeout(timer); });
     cardEl.addEventListener('contextmenu', (e) => e.preventDefault());
 
     const editBtn = cardEl.querySelector('.edit-action');
@@ -1621,7 +1863,11 @@
       return;
     }
 
-    const sorted = [...items].sort((a,b) => new Date(a.endDate) - new Date(b.endDate));
+    const sorted = [...items].sort((a, b) => {
+      if(settings.sortMode === 'dateAsc') return new Date(a.endDate) - new Date(b.endDate);
+      if(settings.sortMode === 'dateDesc') return new Date(b.endDate) - new Date(a.endDate);
+      return (a.order || 0) - (b.order || 0);
+    });
 
     cardsGrid.innerHTML = sorted.map(item => {
       const color = colorFor(item);
@@ -1871,10 +2117,11 @@
   settingsBtn.addEventListener('click', () => {
     refreshSettingsUI();
     settingsBackdrop.style.display = 'flex';
+    lockBodyScroll();
   });
-  settingsCloseBtn.addEventListener('click', () => { settingsBackdrop.style.display = 'none'; });
+  settingsCloseBtn.addEventListener('click', () => { settingsBackdrop.style.display = 'none'; unlockBodyScroll(); });
   settingsBackdrop.addEventListener('click', (e) => {
-    if(e.target === settingsBackdrop) settingsBackdrop.style.display = 'none';
+    if(e.target === settingsBackdrop){ settingsBackdrop.style.display = 'none'; unlockBodyScroll(); }
   });
 
   langSegmented.querySelectorAll('button').forEach(btn => {
@@ -1891,6 +2138,43 @@
       saveSettings();
       refreshSettingsUI();
       applyStyle();
+    });
+  });
+
+  // ---- Menu de tri ----
+  const sortBtn = document.getElementById('sortBtn');
+  const sortBackdrop = document.getElementById('sortBackdrop');
+  const sortCloseBtn = document.getElementById('sortCloseBtn');
+  const sortOptions = document.getElementById('sortOptions');
+
+  function refreshSortUI(){
+    sortOptions.querySelectorAll('.sort-option').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-sort') === settings.sortMode);
+    });
+  }
+
+  function closeSortMenu(){
+    sortBackdrop.style.display = 'none';
+    unlockBodyScroll();
+  }
+
+  sortBtn.addEventListener('click', () => {
+    refreshSortUI();
+    sortBackdrop.style.display = 'flex';
+    lockBodyScroll();
+  });
+  sortCloseBtn.addEventListener('click', closeSortMenu);
+  sortBackdrop.addEventListener('click', (e) => {
+    if(e.target === sortBackdrop) closeSortMenu();
+  });
+
+  sortOptions.querySelectorAll('.sort-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      settings.sortMode = btn.getAttribute('data-sort');
+      saveSettings();
+      refreshSortUI();
+      closeSortMenu();
+      render();
     });
   });
 
