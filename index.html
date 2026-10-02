@@ -1913,7 +1913,7 @@
     return {remaining, progress, notStarted:false, finished:false, monthly, interestPaid, totalInterest};
   }
 
-  const moneyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:5, maximumFractionDigits:5});
+  const moneyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:4, maximumFractionDigits:4});
   const eurFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const threeDecFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:3, maximumFractionDigits:3});
   const monthlyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1});
