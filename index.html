@@ -676,7 +676,6 @@
     font-size:21px;
     font-weight:800;
     letter-spacing:-0.01em;
-    margin-bottom:6px;
     font-variant-numeric:tabular-nums;
   }
   .money-caption{
@@ -704,6 +703,21 @@
     margin-bottom:6px;
     font-variant-numeric:tabular-nums;
     opacity:.95;
+  }
+  .money-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .progress-percent{
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.03em;
+    opacity:.65;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
   }
   .progress-track{
     height:6px;
@@ -994,6 +1008,7 @@
       err_end_time: 'Merci de saisir une heure valide (HH:MM), ou laissez vide pour 00:00.',
       err_credit_fields: 'Merci de compléter montant, taux et les deux dates (JJ/MM/AAAA).',
       err_end_after_start: 'La date de fin doit être après la date de départ.',
+      err_initial_amount: 'Le montant initial ne peut pas être inférieur au montant emprunté.',
       unit_days: 'jours',
       status_done: 'TERMINÉ',
       status_paid_off: 'SOLDÉ',
@@ -1050,6 +1065,7 @@
       err_end_time: 'Please enter a valid time (HH:MM), or leave blank for 00:00.',
       err_credit_fields: 'Please fill in amount, rate and both dates (DD/MM/YYYY).',
       err_end_after_start: 'The end date must be after the start date.',
+      err_initial_amount: 'The initial amount cannot be lower than the loan amount.',
       unit_days: 'days',
       status_done: 'DONE',
       status_paid_off: 'PAID OFF',
@@ -1124,6 +1140,7 @@
   const toggleFormBtn = document.getElementById('toggleFormBtn');
   const emptyArrow = document.getElementById('emptyArrow');
   const cancelFormBtn = document.getElementById('cancelFormBtn');
+  document.getElementById('initialAmountInput').addEventListener('input', function(){ this.classList.remove('invalid'); });
   const colorSwatchesEl = document.getElementById('colorSwatches');
   const iconSwatchesEl = document.getElementById('iconSwatches');
   const submitBtn = document.querySelector('.submit-row button.primary');
@@ -1496,6 +1513,11 @@
       if(end <= start){
         endText.classList.add('invalid');
         showError(t('err_end_after_start'));
+        return;
+      }
+      if(initialAmount !== null && initialAmount < amount){
+        document.getElementById('initialAmountInput').classList.add('invalid');
+        showError(t('err_initial_amount'));
         return;
       }
       const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59);
@@ -1980,7 +2002,10 @@
             </div>
           </div>
           <div class="card-money" style="background:${color.dark};">
-            <div class="money-line" data-money>— €</div>
+            <div class="money-row">
+              <div class="money-line" data-money>— €</div>
+              <div class="progress-percent" data-progress-percent></div>
+            </div>
             <div class="progress-track"><div class="progress-fill" data-progress></div></div>
             <div class="repaid-today" data-repaid-today></div>
             <div class="repaid-month" data-repaid-month></div>
@@ -2107,12 +2132,14 @@
 
         const state = creditState(item, now);
         const progressEl = card.querySelector('[data-progress]');
+        const progressPercentEl = card.querySelector('[data-progress-percent]');
         const moneyEl = card.querySelector('[data-money]');
         const captionEl = card.querySelector('[data-caption]');
         const repaidTodayEl = card.querySelector('[data-repaid-today]');
         const repaidMonthEl = card.querySelector('[data-repaid-month]');
         const interestMonthEl = card.querySelector('[data-interest-month]');
         progressEl.style.width = (state.progress * 100) + '%';
+        progressPercentEl.textContent = (state.progress * 100).toFixed(1) + '%';
         if(state.notStarted){
           moneyEl.textContent = moneyFormatter.format(item.amount) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
