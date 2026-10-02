@@ -549,6 +549,7 @@
     align-items:center;
     gap:14px;
     padding:16px 16px;
+    min-width:0;
   }
   .icon-badge{
     width:52px;
@@ -578,19 +579,21 @@
   }
   .card-number{
     background:rgba(0,0,0,.16);
-    padding:10px 18px;
+    padding:10px 10px;
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
     flex-shrink:0;
-    min-width:78px;
+    width:92px;
+    box-sizing:border-box;
   }
   .number-value{
-    font-size:30px;
+    font-size:26px;
     font-weight:800;
     line-height:1;
     font-variant-numeric:tabular-nums;
+    white-space:nowrap;
   }
   .number-label{
     font-size:11px;
@@ -706,7 +709,8 @@
   @media (max-width:420px){
     .field-row{grid-template-columns:1fr;}
     .icon-badge{width:44px;height:44px;font-size:22px;border-radius:13px;}
-    .number-value{font-size:24px;}
+    .number-value{font-size:21px;}
+    .card-number{width:80px;}
     .card-title{font-size:17px;}
   }
 
@@ -750,7 +754,7 @@
       <div class="field-row single">
         <div class="field">
           <label for="titleInput" data-i18n="label_title">Titre</label>
-          <input type="text" id="titleInput" placeholder="Ex. Départ en vacances" required>
+          <input type="text" id="titleInput" placeholder="Ex. Départ en vacances" maxlength="28" required>
         </div>
       </div>
 
