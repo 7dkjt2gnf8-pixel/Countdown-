@@ -533,7 +533,7 @@
   #app.style-ios .card{
     background:var(--surface) !important;
     color:var(--text) !important;
-    box-shadow:0 0 0 1.5px color-mix(in srgb, var(--card-color, var(--accent)) 90%, transparent) !important;
+    box-shadow:0 0 0 1.5px var(--card-color, var(--accent)) !important;
     border:1px solid var(--border);
   }
   #app.style-ios .card-number,
@@ -548,7 +548,7 @@
   #app.style-ios .status-pill{background:#E5E5EA !important; color:var(--text) !important;}
   #app.style-ios .card-action-btn{
     background:#fff !important;
-    box-shadow:0 1px 3px rgba(0,0,0,.18), 0 0 0 1.5px color-mix(in srgb, var(--card-color, var(--accent)) 95%, transparent);
+    box-shadow:0 1px 3px rgba(0,0,0,.18), 0 0 0 1.5px var(--card-color, var(--accent));
   }
   /* Sélections en style "contour", comme les segments FR/EN de la référence */
   #app.style-ios .segmented button.active,
@@ -1021,6 +1021,7 @@
       err_end_time: 'Merci de saisir une heure valide (HH:MM), ou laissez vide pour 00:00.',
       err_credit_fields: 'Merci de compléter montant, taux et les deux dates (JJ/MM/AAAA).',
       err_end_after_start: 'La date de fin doit être après la date de départ.',
+      err_end_date_past: 'La date de fin ne peut pas être antérieure à aujourd\'hui.',
       err_initial_amount: 'Le montant initial ne peut pas être inférieur au montant emprunté.',
       unit_days: 'jours',
       status_done: 'TERMINÉ',
@@ -1079,6 +1080,7 @@
       err_end_time: 'Please enter a valid time (HH:MM), or leave blank for 00:00.',
       err_credit_fields: 'Please fill in amount, rate and both dates (DD/MM/YYYY).',
       err_end_after_start: 'The end date must be after the start date.',
+      err_end_date_past: 'The end date cannot be earlier than today.',
       err_initial_amount: 'The initial amount cannot be lower than the loan amount.',
       unit_days: 'days',
       status_done: 'DONE',
@@ -1489,6 +1491,12 @@
         showError(t('err_end_date'));
         return;
       }
+      const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+      if(!editingId && datePart < todayMidnight){
+        dateText.classList.add('invalid');
+        showError(t('err_end_date_past'));
+        return;
+      }
       let hh = 0, mm = 0;
       if(timeText.value.trim() !== ''){
         const timePart = parseFRTime(timeText.value);
@@ -1528,6 +1536,12 @@
       if(end <= start){
         endText.classList.add('invalid');
         showError(t('err_end_after_start'));
+        return;
+      }
+      const todayMidnightCredit = new Date(); todayMidnightCredit.setHours(0, 0, 0, 0);
+      if(!editingId && end < todayMidnightCredit){
+        endText.classList.add('invalid');
+        showError(t('err_end_date_past'));
         return;
       }
       if(initialAmount !== null && initialAmount < amount){
