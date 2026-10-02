@@ -59,6 +59,7 @@
     -webkit-touch-callout:default;
   }
   #app{
+    position:relative;
     max-width:640px;
     margin:0 auto;
     padding:calc(28px + env(safe-area-inset-top, 0px)) 16px 90px;
@@ -108,6 +109,28 @@
     cursor:pointer;
   }
   .settings-btn:hover{background:var(--border);}
+  .settings-btn.empty-hint{
+    animation:emptyHintPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes emptyHintPulse{
+    0%, 100%{ box-shadow:0 0 0 0 rgba(255,59,48,.6); }
+    50%{ box-shadow:0 0 0 9px rgba(255,59,48,0); }
+  }
+  .empty-arrow{
+    position:absolute;
+    top:calc(82px + env(safe-area-inset-top, 0px));
+    right:78px;
+    width:44px;
+    height:52px;
+    color:#FF3B30;
+    pointer-events:none;
+    animation:emptyArrowBounce 1.5s ease-in-out infinite;
+  }
+  .empty-arrow svg{display:block; width:100%; height:100%;}
+  @keyframes emptyArrowBounce{
+    0%, 100%{ transform:translateY(0); opacity:.85; }
+    50%{ transform:translateY(5px); opacity:1; }
+  }
 
   /* ---- Form panel ---- */
   .form-panel{
@@ -741,6 +764,13 @@
     </div>
   </header>
 
+  <div class="empty-arrow" id="emptyArrow" style="display:none;">
+    <svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg">
+      <line x1="50" y1="64" x2="22" y2="24" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+      <polygon points="6,4 32,17 13,32" fill="currentColor"/>
+    </svg>
+  </div>
+
   <div class="cards-grid" id="cardsGrid"></div>
 
   <div class="confirm-backdrop" id="formBackdrop" style="display:none;">
@@ -965,8 +995,9 @@
       err_credit_fields: 'Merci de compléter montant, taux et les deux dates (JJ/MM/AAAA).',
       err_end_after_start: 'La date de fin doit être après la date de départ.',
       unit_days: 'jours',
-      status_done: 'terminé',
-      status_paid_off: 'soldé',
+      status_done: 'TERMINÉ',
+      status_paid_off: 'SOLDÉ',
+      status_on: 'le',
       ymd_year: 'an',
       ymd_years: 'ans',
       ymd_months: 'mois',
@@ -1020,8 +1051,9 @@
       err_credit_fields: 'Please fill in amount, rate and both dates (DD/MM/YYYY).',
       err_end_after_start: 'The end date must be after the start date.',
       unit_days: 'days',
-      status_done: 'done',
-      status_paid_off: 'paid off',
+      status_done: 'DONE',
+      status_paid_off: 'PAID OFF',
+      status_on: 'on',
       ymd_year: 'year',
       ymd_years: 'years',
       ymd_months: 'months',
@@ -1090,6 +1122,7 @@
   const formPanel = document.getElementById('formPanel');
   const formBackdrop = document.getElementById('formBackdrop');
   const toggleFormBtn = document.getElementById('toggleFormBtn');
+  const emptyArrow = document.getElementById('emptyArrow');
   const cancelFormBtn = document.getElementById('cancelFormBtn');
   const colorSwatchesEl = document.getElementById('colorSwatches');
   const iconSwatchesEl = document.getElementById('iconSwatches');
@@ -1875,6 +1908,9 @@
 
   // ---- Render ----
   function render(){
+    toggleFormBtn.classList.toggle('empty-hint', items.length === 0);
+    emptyArrow.style.display = items.length === 0 ? 'block' : 'none';
+
     if(items.length === 0){
       cardsGrid.innerHTML = '';
       updateScrollAvailability();
@@ -2039,9 +2075,10 @@
         const remainingMs = end - now;
         const {days, hours, minutes, seconds} = splitDuration(remainingMs);
         if(remainingMs <= 0){
+          const doneLabel = t('status_done') + ' ' + t('status_on') + ' ' + formatFRDate(new Date(end));
           valueEl.textContent = '0';
-          subEl.textContent = t('status_done');
-          ymdEl.textContent = t('status_done');
+          subEl.textContent = doneLabel;
+          ymdEl.textContent = doneLabel;
         } else {
           valueEl.textContent = days;
           subEl.textContent = pad(hours,2) + ':' + pad(minutes,2) + ':' + pad(seconds,2);
@@ -2055,9 +2092,10 @@
         const remainingMs = end - now;
         const {days, hours, minutes, seconds} = splitDuration(remainingMs);
         if(remainingMs <= 0){
+          const paidOffLabel = t('status_paid_off') + ' ' + t('status_on') + ' ' + formatFRDate(new Date(end));
           valueEl.textContent = '0';
-          subEl.textContent = t('status_paid_off');
-          ymdEl.textContent = t('status_paid_off');
+          subEl.textContent = paidOffLabel;
+          ymdEl.textContent = paidOffLabel;
         } else {
           valueEl.textContent = days;
           subEl.textContent = pad(hours,2) + ':' + pad(minutes,2) + ':' + pad(seconds,2);
