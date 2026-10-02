@@ -912,6 +912,16 @@
           <button type="button" data-style="ios" data-i18n="settings_style_ios">Clair</button>
         </div>
       </div>
+
+      <div class="settings-row">
+        <label class="settings-label" data-i18n="settings_decimals">Décimales affichées</label>
+        <div class="segmented" id="decimalsSegmented">
+          <button type="button" data-decimals="2">2</button>
+          <button type="button" data-decimals="3">3</button>
+          <button type="button" data-decimals="4">4</button>
+          <button type="button" data-decimals="5">5</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -981,6 +991,7 @@
       settings_style: 'Style d\'affichage',
       settings_style_color: 'Coloré',
       settings_style_ios: 'Clair',
+      settings_decimals: 'Décimales affichées',
       sort_title: 'Trier par',
       sort_date_asc: 'Date (croissant)',
       sort_date_desc: 'Date (décroissant)',
@@ -1038,6 +1049,7 @@
       settings_style: 'Display style',
       settings_style_color: 'Color',
       settings_style_ios: 'Light',
+      settings_decimals: 'Decimal places',
       sort_title: 'Sort by',
       sort_date_asc: 'Date (ascending)',
       sort_date_desc: 'Date (descending)',
@@ -1091,7 +1103,7 @@
     }
   };
 
-  let settings = {lang: 'fr', style: 'ios', sortMode: 'manual'};
+  let settings = {lang: 'fr', style: 'ios', sortMode: 'manual', decimals: 4};
 
   function loadSettings(){
     try{
@@ -1101,6 +1113,7 @@
         if(parsed.lang === 'fr' || parsed.lang === 'en') settings.lang = parsed.lang;
         if(parsed.style === 'color' || parsed.style === 'ios') settings.style = parsed.style;
         if(parsed.sortMode === 'dateAsc' || parsed.sortMode === 'dateDesc' || parsed.sortMode === 'manual') settings.sortMode = parsed.sortMode;
+        if(typeof parsed.decimals === 'number' && parsed.decimals >= 2 && parsed.decimals <= 5) settings.decimals = parsed.decimals;
       }
     }catch(e){}
   }
@@ -1913,7 +1926,10 @@
     return {remaining, progress, notStarted:false, finished:false, monthly, interestPaid, totalInterest};
   }
 
-  const moneyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:4, maximumFractionDigits:4});
+  function formatMoney(val){
+    const d = settings.decimals || 4;
+    return new Intl.NumberFormat('fr-FR', {minimumFractionDigits:d, maximumFractionDigits:d}).format(val);
+  }
   const eurFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const threeDecFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:3, maximumFractionDigits:3});
   const monthlyFormatter = new Intl.NumberFormat('fr-FR', {minimumFractionDigits:1, maximumFractionDigits:1});
@@ -2141,19 +2157,19 @@
         progressEl.style.width = (state.progress * 100) + '%';
         progressPercentEl.textContent = (state.progress * 100).toFixed(1) + '%';
         if(state.notStarted){
-          moneyEl.textContent = moneyFormatter.format(item.amount) + ' €';
+          moneyEl.textContent = formatMoney(item.amount) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
           interestMonthEl.textContent = '';
         } else if(state.finished){
-          moneyEl.textContent = moneyFormatter.format(0) + ' €';
+          moneyEl.textContent = formatMoney(0) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
           interestMonthEl.textContent = '';
         } else {
-          moneyEl.textContent = moneyFormatter.format(state.remaining) + ' €';
+          moneyEl.textContent = formatMoney(state.remaining) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           const startOfToday = new Date(now);
           startOfToday.setHours(0, 0, 0, 0);
@@ -2162,7 +2178,7 @@
           const stateEndOfDay = creditState(item, startOfTomorrow);
           const repaidToday = Math.max(0, stateStartOfDay.remaining - state.remaining);
           const totalToday = Math.max(0, stateStartOfDay.remaining - stateEndOfDay.remaining);
-          repaidTodayEl.textContent = t('repaid_today') + ' : ' + moneyFormatter.format(repaidToday) + ' € / ' + eurFormatter.format(totalToday) + '€';
+          repaidTodayEl.textContent = t('repaid_today') + ' : ' + formatMoney(repaidToday) + ' € / ' + eurFormatter.format(totalToday) + '€';
 
           const startOfMonth = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1).getTime();
           const startOfNextMonth = new Date(startOfToday.getFullYear(), startOfToday.getMonth() + 1, 1).getTime();
@@ -2188,6 +2204,7 @@
   const settingsCloseBtn = document.getElementById('settingsCloseBtn');
   const langSegmented = document.getElementById('langSegmented');
   const styleSegmented = document.getElementById('styleSegmented');
+  const decimalsSegmented = document.getElementById('decimalsSegmented');
 
   function refreshSettingsUI(){
     langSegmented.querySelectorAll('button').forEach(btn => {
@@ -2195,6 +2212,9 @@
     });
     styleSegmented.querySelectorAll('button').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-style') === settings.style);
+    });
+    decimalsSegmented.querySelectorAll('button').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.getAttribute('data-decimals'), 10) === settings.decimals);
     });
   }
 
@@ -2222,6 +2242,14 @@
       saveSettings();
       refreshSettingsUI();
       applyStyle();
+    });
+  });
+  decimalsSegmented.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      settings.decimals = parseInt(btn.getAttribute('data-decimals'), 10);
+      saveSettings();
+      refreshSettingsUI();
+      tick();
     });
   });
 
