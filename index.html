@@ -938,6 +938,16 @@
           <label for="initialAmountInput" data-i18n="label_initial_amount">Montant initial (€) — facultatif, si différent (renégociation)</label>
           <input type="number" id="initialAmountInput" min="0" step="0.01" inputmode="decimal" placeholder="Optionnel">
         </div>
+        <div class="field" id="initialDateField" style="display:none;">
+          <label for="initialDateText" data-i18n="label_initial_date">Date du montant initial</label>
+          <div class="date-input-wrap">
+            <input type="text" id="initialDateText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
+            <div class="calendar-btn-wrap">
+              <button type="button" class="calendar-btn" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></button>
+              <input type="date" id="initialDateHidden" class="native-picker-overlay" aria-label="Choisir dans le calendrier">
+            </div>
+          </div>
+        </div>
         <div class="field">
           <label for="rateInput" data-i18n="label_rate">Taux annuel (%)</label>
           <input type="number" id="rateInput" min="0" step="0.01" inputmode="decimal" placeholder="3.5">
@@ -1110,6 +1120,9 @@
       label_end_time: 'Heure de fin',
       label_amount: 'Montant emprunté (€)',
       label_initial_amount: 'Montant initial (€) — facultatif, si différent (renégociation)',
+      label_initial_date: 'Date du montant initial',
+      err_initial_date: 'Merci de saisir la date du montant initial (JJ/MM/AAAA).',
+      err_initial_date_order: 'La date du montant initial doit être antérieure à la date de départ.',
       label_rate: 'Taux annuel (%)',
       label_insurance: 'Assurance mensuelle (€) — facultatif',
       label_start_date: 'Date de départ',
@@ -1174,6 +1187,9 @@
       label_end_time: 'End time',
       label_amount: 'Loan amount (€)',
       label_initial_amount: 'Initial amount (€) — optional, if different (renegotiation)',
+      label_initial_date: 'Initial amount date',
+      err_initial_date: 'Please enter the initial amount date (DD/MM/YYYY).',
+      err_initial_date_order: 'The initial amount date must be before the start date.',
       label_rate: 'Annual rate (%)',
       label_insurance: 'Monthly insurance (€) — optional',
       label_start_date: 'Start date',
@@ -1264,7 +1280,11 @@
   const toggleFormBtn = document.getElementById('toggleFormBtn');
   const emptyArrow = document.getElementById('emptyArrow');
   const cancelFormBtn = document.getElementById('cancelFormBtn');
-  document.getElementById('initialAmountInput').addEventListener('input', function(){ this.classList.remove('invalid'); });
+  document.getElementById('initialAmountInput').addEventListener('input', function(){
+    this.classList.remove('invalid');
+    document.getElementById('initialDateField').style.display = this.value.trim() !== '' ? 'flex' : 'none';
+  });
+  document.getElementById('initialDateText').addEventListener('input', function(){ this.classList.remove('invalid'); });
   const colorSwatchesEl = document.getElementById('colorSwatches');
   const iconSwatchesEl = document.getElementById('iconSwatches');
   const submitBtn = document.querySelector('.submit-row button.primary');
@@ -1316,6 +1336,7 @@
     formBackdrop.style.display = 'none';
     unlockBodyScroll();
     form.reset();
+    document.getElementById('initialDateField').style.display = 'none';
     setType('simple');
     formError.style.display = 'none';
     if(!editingId){
@@ -1346,6 +1367,8 @@
       setType('credit');
       document.getElementById('amountInput').value = item.amount;
       document.getElementById('initialAmountInput').value = (typeof item.initialAmount === 'number') ? item.initialAmount : '';
+      document.getElementById('initialDateText').value = item.initialDate ? formatFRDate(new Date(item.initialDate)) : '';
+      document.getElementById('initialDateField').style.display = (typeof item.initialAmount === 'number') ? 'flex' : 'none';
       document.getElementById('rateInput').value = item.rate;
       document.getElementById('insuranceInput').value = item.insurance ? item.insurance : '';
       document.getElementById('startDateText').value = formatFRDate(new Date(item.startDate));
@@ -1579,6 +1602,7 @@
   setupDatePicker('endDateOnlyText', 'endDateOnlyHidden');
   setupTimePicker('endTimeText', 'endTimeHidden');
   setupDatePicker('startDateText', 'startDateHidden');
+  setupDatePicker('initialDateText', 'initialDateHidden');
   setupDatePicker('creditEndDateText', 'creditEndDateHidden');
 
   // ---- Form submit (création ou édition) ----
@@ -1656,6 +1680,22 @@
         showError(t('err_initial_amount'));
         return;
       }
+      let initialDate = null;
+      if(initialAmount !== null){
+        const initialDateText = document.getElementById('initialDateText');
+        const initialDatePart = parseFRDate(initialDateText.value);
+        if(!initialDatePart){
+          initialDateText.classList.add('invalid');
+          showError(t('err_initial_date'));
+          return;
+        }
+        if(initialDatePart >= start){
+          initialDateText.classList.add('invalid');
+          showError(t('err_initial_date_order'));
+          return;
+        }
+        initialDate = initialDatePart.toISOString();
+      }
       const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59);
       fields = {
         type: 'credit',
@@ -1664,6 +1704,7 @@
         rate,
         insurance,
         initialAmount,
+        initialDate,
         colorIndex: selectedColorIndex,
         icon: ICONS_ALL[selectedIconIndex],
         startDate: start.toISOString(),
@@ -2100,9 +2141,24 @@
     totalMonthlyEl.textContent = t('total_monthly') + ' : ' + monthlyFormatter.format(monthlySum) + ' €';
   }
 
+  // Reconstitue le capital restant dû en tenant compte, le cas échéant, de la période
+  // antérieure à une renégociation (montant initial + date du montant initial).
+  function remainingWithHistory(item, t){
+    if(item.initialDate && typeof item.initialAmount === 'number'){
+      const initMs = new Date(item.initialDate).getTime();
+      const startMs = new Date(item.startDate).getTime();
+      if(t <= initMs) return item.initialAmount;
+      if(t < startMs && startMs > initMs){
+        const frac = (t - initMs) / (startMs - initMs);
+        return item.initialAmount + (item.amount - item.initialAmount) * frac;
+      }
+    }
+    return creditState(item, t).remaining;
+  }
+
   function generateTotalChartSVG(creditItems){
     if(creditItems.length === 0) return '';
-    const starts = creditItems.map(i => new Date(i.startDate).getTime());
+    const starts = creditItems.map(i => i.initialDate ? new Date(i.initialDate).getTime() : new Date(i.startDate).getTime());
     const ends = creditItems.map(i => new Date(i.endDate).getTime());
     const minStart = Math.min(...starts);
     const maxEnd = Math.max(...ends);
@@ -2117,7 +2173,7 @@
     for(let i = 0; i <= POINTS; i++){
       const tms = minStart + (maxEnd - minStart) * (i / POINTS);
       let sum = 0;
-      creditItems.forEach(item => { sum += creditState(item, tms).remaining; });
+      creditItems.forEach(item => { sum += remainingWithHistory(item, tms); });
       samples.push({tms, val: sum});
     }
     const maxVal = Math.max(...samples.map(s => s.val), 1);
@@ -2134,7 +2190,7 @@
     let marker = '';
     if(now >= minStart && now <= maxEnd){
       let nowSum = 0;
-      creditItems.forEach(item => { nowSum += creditState(item, now).remaining; });
+      creditItems.forEach(item => { nowSum += remainingWithHistory(item, now); });
       const mx = xFor(now).toFixed(1);
       const my = yFor(nowSum).toFixed(1);
       marker = '<line x1="' + mx + '" y1="' + padT + '" x2="' + mx + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-opacity="0.35" stroke-width="1" stroke-dasharray="2,2"></line>' +
@@ -2176,7 +2232,7 @@
     totalCardEl.style.display = 'block';
     totalChartEl.innerHTML = generateTotalChartSVG(creditItems);
 
-    const starts = creditItems.map(i => new Date(i.startDate).getTime());
+    const starts = creditItems.map(i => i.initialDate ? new Date(i.initialDate).getTime() : new Date(i.startDate).getTime());
     const ends = creditItems.map(i => new Date(i.endDate).getTime());
     const minStart = Math.min(...starts);
     const maxEnd = Math.max(...ends);
