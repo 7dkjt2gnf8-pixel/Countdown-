@@ -376,13 +376,6 @@
     font-variant-numeric:tabular-nums;
     color:#1C1C1E;
   }
-  .total-percent{
-    font-size:12px;
-    font-weight:700;
-    color:#8A8A8E;
-    font-variant-numeric:tabular-nums;
-    white-space:nowrap;
-  }
   .total-card .progress-track{background:#E5E5EA;}
   .total-card .progress-fill{background:#007AFF;}
   .total-monthly{
@@ -867,7 +860,6 @@
     </div>
     <div class="total-money-row">
       <div class="total-amount" data-total-amount>— €</div>
-      <div class="total-percent" data-total-percent></div>
     </div>
     <div class="progress-track"><div class="progress-fill" data-total-progress></div></div>
     <div class="total-monthly" data-total-monthly></div>
@@ -2111,7 +2103,6 @@
   // ---- Bloc total des crédits ----
   const totalCardEl = document.getElementById('totalCard');
   const totalAmountEl = document.getElementById('totalCard').querySelector('[data-total-amount]');
-  const totalPercentEl = document.getElementById('totalCard').querySelector('[data-total-percent]');
   const totalProgressEl = document.getElementById('totalCard').querySelector('[data-total-progress]');
   const totalMonthlyEl = document.getElementById('totalCard').querySelector('[data-total-monthly]');
   const totalChartEl = document.getElementById('totalChart');
@@ -2128,15 +2119,19 @@
     const now = Date.now();
     let remainingSum = 0, baseSum = 0, monthlySum = 0;
     creditItems.forEach(item => {
-      const state = creditState(item, now);
-      const base = (typeof item.initialAmount === 'number' && item.initialAmount > 0) ? item.initialAmount : item.amount;
-      remainingSum += state.remaining;
-      baseSum += base;
-      monthlySum += state.monthly + (item.insurance || 0);
+      const startMs = new Date(item.startDate).getTime();
+      const hasHistory = item.initialDate && typeof item.initialAmount === 'number';
+      const active = now >= startMs || hasHistory;
+      remainingSum += remainingWithHistory(item, now);
+      if(active){
+        const state = creditState(item, now);
+        const base = (typeof item.initialAmount === 'number' && item.initialAmount > 0) ? item.initialAmount : item.amount;
+        baseSum += base;
+        monthlySum += state.monthly + (item.insurance || 0);
+      }
     });
     const progress = baseSum > 0 ? Math.min(1, Math.max(0, (baseSum - remainingSum) / baseSum)) : 0;
     totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
-    totalPercentEl.textContent = (progress * 100).toFixed(1) + '%';
     totalProgressEl.style.width = (progress * 100) + '%';
     totalMonthlyEl.textContent = t('total_monthly') + ' : ' + monthlyFormatter.format(monthlySum) + ' €';
   }
@@ -2144,14 +2139,18 @@
   // Reconstitue le capital restant dû en tenant compte, le cas échéant, de la période
   // antérieure à une renégociation (montant initial + date du montant initial).
   function remainingWithHistory(item, t){
+    const startMs = new Date(item.startDate).getTime();
     if(item.initialDate && typeof item.initialAmount === 'number'){
       const initMs = new Date(item.initialDate).getTime();
-      const startMs = new Date(item.startDate).getTime();
       if(t <= initMs) return item.initialAmount;
       if(t < startMs && startMs > initMs){
         const frac = (t - initMs) / (startMs - initMs);
         return item.initialAmount + (item.amount - item.initialAmount) * frac;
       }
+    } else if(t < startMs){
+      // Pas d'historique renseigné : avant la date de départ, ce crédit n'existe
+      // pas encore et ne doit pas compter dans le total (saut net à son démarrage).
+      return 0;
     }
     return creditState(item, t).remaining;
   }
