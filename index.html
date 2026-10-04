@@ -2158,9 +2158,10 @@
 
   function generateTotalChartSVG(creditItems){
     if(creditItems.length === 0) return '';
-    const starts = creditItems.map(i => i.initialDate ? new Date(i.initialDate).getTime() : new Date(i.startDate).getTime());
+    const initialDatesMs = creditItems.filter(i => i.initialDate).map(i => new Date(i.initialDate).getTime());
+    const startDatesMs = creditItems.map(i => new Date(i.startDate).getTime());
     const ends = creditItems.map(i => new Date(i.endDate).getTime());
-    const minStart = Math.min(...starts);
+    const minStart = initialDatesMs.length > 0 ? Math.min(...initialDatesMs) : Math.min(...startDatesMs);
     const maxEnd = Math.max(...ends);
     if(maxEnd <= minStart) return '';
 
@@ -2232,9 +2233,10 @@
     totalCardEl.style.display = 'block';
     totalChartEl.innerHTML = generateTotalChartSVG(creditItems);
 
-    const starts = creditItems.map(i => i.initialDate ? new Date(i.initialDate).getTime() : new Date(i.startDate).getTime());
+    const initialDatesMs = creditItems.filter(i => i.initialDate).map(i => new Date(i.initialDate).getTime());
+    const startDatesMs = creditItems.map(i => new Date(i.startDate).getTime());
     const ends = creditItems.map(i => new Date(i.endDate).getTime());
-    const minStart = Math.min(...starts);
+    const minStart = initialDatesMs.length > 0 ? Math.min(...initialDatesMs) : Math.min(...startDatesMs);
     const maxEnd = Math.max(...ends);
     const span = maxEnd - minStart;
 
