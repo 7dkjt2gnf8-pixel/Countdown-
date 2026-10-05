@@ -1112,8 +1112,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.8 -> v1.8 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.8</div>
+  <!-- APP_VERSION: incrémenter (v1.9 -> v1.9 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.9</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -1280,6 +1280,7 @@
   const STORAGE_KEY = 'countdowns:list';
   const SETTINGS_KEY = 'countdown:settings';
   let items = [];
+  let tickTargets = []; // cache DOM résolu une fois par render(), consommé par tick() à chaque frame
 
   // ---- i18n ----
   const I18N = {
@@ -2491,16 +2492,22 @@
     archiveList.style.display = open ? 'flex' : 'none';
   });
 
-  function creditItemsList(){
+  let cachedCreditItems = [];
+  function recomputeCreditItemsList(){
     const rangeStart = settings.totalFrom ? new Date(settings.totalFrom).getTime() : -Infinity;
     const rangeEnd = settings.totalTo ? new Date(settings.totalTo).getTime() : Infinity;
-    return items.filter(i => {
+    cachedCreditItems = items.filter(i => {
       if(i.type !== 'credit') return false;
       if(i.archived && !settings.totalIncludeArchived) return false;
       const itemStart = new Date(i.startDate).getTime();
       const itemEnd = new Date(i.endDate).getTime();
       return itemEnd >= rangeStart && itemStart <= rangeEnd;
     });
+  }
+  // Liste déjà filtrée, mise à jour uniquement quand les données changent (render()) —
+  // à ne jamais recalculer dans la boucle d'animation (tick), coûteux à haute fréquence.
+  function creditItemsList(){
+    return cachedCreditItems;
   }
 
   function updateTotalCard(){
@@ -2725,6 +2732,7 @@
 
   // ---- Render ----
   function render(){
+    recomputeCreditItemsList();
     const activeItems = items.filter(i => !i.archived);
     toggleFormBtn.classList.toggle('empty-hint', activeItems.length === 0);
     emptyArrow.style.display = activeItems.length === 0 ? 'block' : 'none';
@@ -2733,6 +2741,7 @@
 
     if(activeItems.length === 0){
       cardsGrid.innerHTML = '';
+      tickTargets = [];
       updateScrollAvailability();
       return;
     }
@@ -2814,14 +2823,33 @@
       }
     }).join('');
 
+    tickTargets = [];
     cardsGrid.querySelectorAll('.card').forEach(cardEl => {
       const item = items.find(i => i.id === cardEl.getAttribute('data-id'));
-      if(item) attachLongPress(cardEl, item);
+      if(!item) return;
+      attachLongPress(cardEl, item);
       const numberEl = cardEl.querySelector('[data-number]');
       numberEl.addEventListener('click', (e) => {
         e.stopPropagation();
         numberEl.classList.toggle('mode-ymd');
         tick();
+      });
+      // Références résolues une seule fois ici, réutilisées à chaque frame par tick()
+      // plutôt que de requêter le DOM 5 fois par carte et 60+ fois par seconde.
+      tickTargets.push({
+        card: cardEl,
+        item,
+        valueEl: cardEl.querySelector('[data-value]'),
+        subEl: cardEl.querySelector('[data-sub]'),
+        ymdEl: cardEl.querySelector('[data-ymd]'),
+        numberEl,
+        progressEl: cardEl.querySelector('[data-progress]'),
+        progressPercentEl: cardEl.querySelector('[data-progress-percent]'),
+        moneyEl: cardEl.querySelector('[data-money]'),
+        captionEl: cardEl.querySelector('[data-caption]'),
+        repaidTodayEl: cardEl.querySelector('[data-repaid-today]'),
+        repaidMonthEl: cardEl.querySelector('[data-repaid-month]'),
+        interestMonthEl: cardEl.querySelector('[data-interest-month]')
       });
     });
 
@@ -2884,14 +2912,13 @@
   function tick(){
     const now = Date.now();
     updateTotalCard();
-    document.querySelectorAll('.card').forEach(card => {
-      const id = card.getAttribute('data-id');
-      const item = items.find(i => i.id === id);
-      if(!item) return;
-      const valueEl = card.querySelector('[data-value]');
-      const subEl = card.querySelector('[data-sub]');
-      const ymdEl = card.querySelector('[data-ymd]');
-      const numberEl = card.querySelector('[data-number]');
+    tickTargets.forEach(target => {
+      const card = target.card;
+      const item = target.item;
+      const valueEl = target.valueEl;
+      const subEl = target.subEl;
+      const ymdEl = target.ymdEl;
+      const numberEl = target.numberEl;
       const isYMD = numberEl.classList.contains('mode-ymd');
 
       if(item.type === 'simple'){
@@ -2930,13 +2957,13 @@
         }
 
         const state = creditState(item, now);
-        const progressEl = card.querySelector('[data-progress]');
-        const progressPercentEl = card.querySelector('[data-progress-percent]');
-        const moneyEl = card.querySelector('[data-money]');
-        const captionEl = card.querySelector('[data-caption]');
-        const repaidTodayEl = card.querySelector('[data-repaid-today]');
-        const repaidMonthEl = card.querySelector('[data-repaid-month]');
-        const interestMonthEl = card.querySelector('[data-interest-month]');
+        const progressEl = target.progressEl;
+        const progressPercentEl = target.progressPercentEl;
+        const moneyEl = target.moneyEl;
+        const captionEl = target.captionEl;
+        const repaidTodayEl = target.repaidTodayEl;
+        const repaidMonthEl = target.repaidMonthEl;
+        const interestMonthEl = target.interestMonthEl;
         progressEl.style.width = (state.progress * 100) + '%';
         progressPercentEl.textContent = (state.progress * 100).toFixed(1) + '%';
         if(state.notStarted){
@@ -3090,7 +3117,14 @@
   setType('simple');
   applyTranslations();
   loadItems();
-  setInterval(tick, 100);
+
+  // Boucle de mise à jour calée sur le taux de rafraîchissement de l'écran (plus fluide
+  // qu'un setInterval à intervalle fixe, et automatiquement mise en pause en arrière-plan).
+  function animationLoop(){
+    tick();
+    requestAnimationFrame(animationLoop);
+  }
+  requestAnimationFrame(animationLoop);
 })();
 </script>
 </body>
