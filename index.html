@@ -404,6 +404,7 @@
     position:relative;
     height:14px;
     margin-top:2px;
+    transition:height .15s ease;
   }
   .total-chart-dates span{
     position:absolute;
@@ -1111,8 +1112,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.7 -> v1.7 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.7</div>
+  <!-- APP_VERSION: incrémenter (v1.8 -> v1.8 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.8</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2696,10 +2697,25 @@
         });
       });
       markers.sort((a, b) => a - b);
-      totalChartDatesEl.innerHTML = markers.map(ms => {
+
+      // Si deux dates sont trop proches pour tenir côte à côte, on les répartit
+      // sur des lignes alternées plutôt que de les laisser se chevaucher.
+      const MIN_GAP_PCT = 11;
+      const rowLastPct = [-Infinity, -Infinity, -Infinity];
+      const placed = markers.map(ms => {
         const pct = Math.min(100, Math.max(0, ((ms - minStart) / span) * 100));
-        return '<span style="left:' + pct.toFixed(2) + '%;">' + formatShortDate(ms) + '</span>';
-      }).join('');
+        let row = rowLastPct.length - 1;
+        for(let r = 0; r < rowLastPct.length; r++){
+          if(pct - rowLastPct[r] >= MIN_GAP_PCT){ row = r; break; }
+        }
+        rowLastPct[row] = pct;
+        return {ms, pct, row};
+      });
+      const rowCount = Math.max(1, ...placed.map(p => p.row + 1));
+      totalChartDatesEl.style.height = (rowCount * 13 + 1) + 'px';
+      totalChartDatesEl.innerHTML = placed.map(p =>
+        '<span style="left:' + p.pct.toFixed(2) + '%; top:' + (p.row * 13) + 'px;">' + formatShortDate(p.ms) + '</span>'
+      ).join('');
     } else {
       totalChartDatesEl.innerHTML = '';
     }
