@@ -362,6 +362,20 @@
     text-transform:uppercase;
     letter-spacing:.04em;
   }
+  .total-filter-btn{
+    margin-left:auto;
+    width:26px;
+    height:26px;
+    border-radius:8px;
+    border:none;
+    background:#F2F2F7;
+    color:#8A8A8E;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .total-filter-btn.active{background:#007AFF; color:#fff;}
   .total-money-row{
     display:flex;
     align-items:baseline;
@@ -817,6 +831,99 @@
     .card-title{font-size:17px;}
   }
 
+  .archive-banner{
+    margin-top:16px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    background:var(--surface);
+  }
+  .archive-banner-toggle{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:transparent;
+    border:none;
+    padding:13px 16px;
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--text-muted);
+    cursor:pointer;
+  }
+  .archive-count{
+    background:var(--bg);
+    color:var(--text-muted);
+    font-size:11.5px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:20px;
+  }
+  .archive-chevron{
+    margin-left:auto;
+    flex-shrink:0;
+    transition:transform .2s ease;
+  }
+  .archive-banner.open .archive-chevron{transform:rotate(180deg);}
+  .archive-list{
+    border-top:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+  }
+  .archive-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    border-bottom:1px solid var(--border);
+  }
+  .archive-item:last-child{border-bottom:none;}
+  .archive-item-icon{
+    width:32px;
+    height:32px;
+    border-radius:10px;
+    background:var(--bg);
+    color:var(--text-muted);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .archive-item-text{flex:1; min-width:0;}
+  .archive-item-title{
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--text);
+    margin:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .archive-item-sub{
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--text-muted);
+  }
+  .archive-item-actions{
+    display:flex;
+    gap:6px;
+    flex-shrink:0;
+  }
+  .archive-item-btn{
+    width:30px;
+    height:30px;
+    border-radius:9px;
+    border:none;
+    background:var(--bg);
+    color:var(--text-muted);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .archive-item-btn.danger{color:var(--danger);}
+
   .app-footer{
     text-align:center;
     margin-top:32px;
@@ -868,6 +975,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
       </div>
       <span class="total-label" data-i18n="total_label">Total des crédits</span>
+      <button type="button" class="total-filter-btn" id="totalFilterBtn" aria-label="Filtrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+      </button>
     </div>
     <div class="total-money-row">
       <div class="total-amount" data-total-amount>— €</div>
@@ -879,6 +989,15 @@
   </div>
 
   <div class="cards-grid" id="cardsGrid"></div>
+
+  <div class="archive-banner" id="archiveBanner" style="display:none;">
+    <button type="button" class="archive-banner-toggle" id="archiveBannerToggle">
+      <span data-i18n="archived_label">Archivés</span>
+      <span class="archive-count" id="archiveCount"></span>
+      <svg class="archive-chevron" id="archiveChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </button>
+    <div class="archive-list" id="archiveList" style="display:none;"></div>
+  </div>
 
   <div class="confirm-backdrop" id="formBackdrop" style="display:none;">
   <div class="form-panel" id="formPanel">
@@ -992,8 +1111,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.3 -> v1.3 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.3</div>
+  <!-- APP_VERSION: incrémenter (v1.5 -> v1.5 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.5</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -1063,6 +1182,71 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-backdrop" id="archiveChoiceBackdrop" style="display:none;">
+    <div class="confirm-box settings-box">
+      <div class="settings-header">
+        <p class="settings-title" id="archiveChoiceTitle">—</p>
+        <button type="button" id="archiveChoiceCloseBtn" class="settings-close-btn" aria-label="Fermer">✕</button>
+      </div>
+      <div class="sort-options">
+        <button type="button" id="archiveChoiceArchiveBtn" class="sort-option">
+          <span data-i18n="action_archive">Archiver</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><rect x="3" y="4" width="18" height="5" rx="1"></rect><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"></path><line x1="10" y1="13" x2="14" y2="13"></line></svg>
+        </button>
+        <button type="button" id="archiveChoiceDeleteBtn" class="sort-option" style="color:var(--danger);">
+          <span data-i18n="action_delete">Supprimer</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-backdrop" id="totalFilterBackdrop" style="display:none;">
+    <div class="confirm-box settings-box">
+      <div class="settings-header">
+        <p class="settings-title" data-i18n="total_filter_title">Filtrer le total</p>
+        <button type="button" id="totalFilterCloseBtn" class="settings-close-btn" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label" data-i18n="total_filter_from">Du</label>
+        <div class="date-input-wrap">
+          <input type="text" id="totalFromText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
+          <div class="calendar-btn-wrap">
+            <button type="button" class="calendar-btn" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></button>
+            <input type="date" id="totalFromHidden" class="native-picker-overlay" aria-label="Choisir dans le calendrier">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label" data-i18n="total_filter_to">Au</label>
+        <div class="date-input-wrap">
+          <input type="text" id="totalToText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
+          <div class="calendar-btn-wrap">
+            <button type="button" class="calendar-btn" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></button>
+            <input type="date" id="totalToHidden" class="native-picker-overlay" aria-label="Choisir dans le calendrier">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label" data-i18n="total_filter_archived">Inclure les archivés</label>
+        <div class="segmented" id="totalArchivedSegmented">
+          <button type="button" data-archived="off" data-i18n="word_no">Non</button>
+          <button type="button" data-archived="on" data-i18n="word_yes">Oui</button>
+        </div>
+      </div>
+
+      <div class="form-error" id="totalFilterError"></div>
+
+      <div class="submit-row">
+        <button type="button" id="totalFilterResetBtn" class="secondary" data-i18n="total_filter_reset">Réinitialiser</button>
+        <button type="button" id="totalFilterApplyBtn" class="primary" data-i18n="total_filter_apply">Appliquer</button>
       </div>
     </div>
   </div>
@@ -1161,6 +1345,20 @@
       interest_month: 'Intérêts ce mois',
       confirm_delete: 'Supprimer',
       confirm_delete_suffix: '?',
+      action_archive: 'Archiver',
+      action_unarchive: 'Désarchiver',
+      archived_label: 'Archivés',
+      archive_choice_title: 'Que faire de',
+      word_no: 'Non',
+      word_yes: 'Oui',
+      total_filter_title: 'Filtrer le total',
+      total_filter_from: 'Du',
+      total_filter_to: 'Au',
+      total_filter_archived: 'Inclure les archivés',
+      total_filter_reset: 'Réinitialiser',
+      total_filter_apply: 'Appliquer',
+      total_filter_err_order: 'La date "Au" doit être après la date "Du".',
+      total_filter_err_date: 'Date invalide (JJ/MM/AAAA).',
       action_edit: 'Modifier',
       action_delete: 'Supprimer',
       footer: 'Designed by Mienos'
@@ -1228,13 +1426,27 @@
       interest_month: 'Interest this month',
       confirm_delete: 'Delete',
       confirm_delete_suffix: '?',
+      action_archive: 'Archive',
+      action_unarchive: 'Unarchive',
+      archived_label: 'Archived',
+      archive_choice_title: 'What to do with',
+      word_no: 'No',
+      word_yes: 'Yes',
+      total_filter_title: 'Filter the total',
+      total_filter_from: 'From',
+      total_filter_to: 'To',
+      total_filter_archived: 'Include archived',
+      total_filter_reset: 'Reset',
+      total_filter_apply: 'Apply',
+      total_filter_err_order: 'The "To" date must be after the "From" date.',
+      total_filter_err_date: 'Invalid date (DD/MM/YYYY).',
       action_edit: 'Edit',
       action_delete: 'Delete',
       footer: 'Designed by Mienos'
     }
   };
 
-  let settings = {lang: 'fr', style: 'ios', sortMode: 'manual', decimals: 4, showTotal: false};
+  let settings = {lang: 'fr', style: 'ios', sortMode: 'manual', decimals: 4, showTotal: false, totalFrom: null, totalTo: null, totalIncludeArchived: false};
 
   function loadSettings(){
     try{
@@ -1246,6 +1458,9 @@
         if(parsed.sortMode === 'dateAsc' || parsed.sortMode === 'dateDesc' || parsed.sortMode === 'manual') settings.sortMode = parsed.sortMode;
         if(typeof parsed.decimals === 'number' && parsed.decimals >= 2 && parsed.decimals <= 5) settings.decimals = parsed.decimals;
         if(typeof parsed.showTotal === 'boolean') settings.showTotal = parsed.showTotal;
+        if(typeof parsed.totalFrom === 'string' || parsed.totalFrom === null) settings.totalFrom = parsed.totalFrom;
+        if(typeof parsed.totalTo === 'string' || parsed.totalTo === null) settings.totalTo = parsed.totalTo;
+        if(typeof parsed.totalIncludeArchived === 'boolean') settings.totalIncludeArchived = parsed.totalIncludeArchived;
       }
     }catch(e){}
   }
@@ -1618,6 +1833,8 @@
   setupTimePicker('endTimeText', 'endTimeHidden');
   setupDatePicker('startDateText', 'startDateHidden');
   setupDatePicker('initialDateText', 'initialDateHidden');
+  setupDatePicker('totalFromText', 'totalFromHidden');
+  setupDatePicker('totalToText', 'totalToHidden');
   setupDatePicker('creditEndDateText', 'creditEndDateHidden');
 
   // ---- Form submit (création ou édition) ----
@@ -1751,6 +1968,16 @@
     render();
   }
 
+  function archiveItem(id){
+    const it = items.find(i => i.id === id);
+    if(it){ it.archived = true; saveItems(); render(); }
+  }
+
+  function unarchiveItem(id){
+    const it = items.find(i => i.id === id);
+    if(it){ it.archived = false; saveItems(); render(); }
+  }
+
   // ---- Boîte de confirmation personnalisée (window.confirm est bloqué dans certains aperçus) ----
   const confirmBackdrop = document.getElementById('confirmBackdrop');
   const confirmText = document.getElementById('confirmText');
@@ -1777,6 +2004,43 @@
   confirmOkBtn.addEventListener('click', () => closeConfirm(true));
   confirmBackdrop.addEventListener('click', (e) => {
     if(e.target === confirmBackdrop) closeConfirm(false);
+  });
+
+  // ---- Choix Archiver / Supprimer (au clic sur la corbeille) ----
+  const archiveChoiceBackdrop = document.getElementById('archiveChoiceBackdrop');
+  const archiveChoiceTitle = document.getElementById('archiveChoiceTitle');
+  const archiveChoiceCloseBtn = document.getElementById('archiveChoiceCloseBtn');
+  const archiveChoiceArchiveBtn = document.getElementById('archiveChoiceArchiveBtn');
+  const archiveChoiceDeleteBtn = document.getElementById('archiveChoiceDeleteBtn');
+  let archiveChoiceItemId = null;
+
+  function openArchiveChoice(item){
+    archiveChoiceItemId = item.id;
+    archiveChoiceTitle.textContent = t('archive_choice_title') + ' « ' + item.title + ' » ?';
+    archiveChoiceBackdrop.style.display = 'flex';
+    lockBodyScroll();
+  }
+  function closeArchiveChoice(){
+    archiveChoiceBackdrop.style.display = 'none';
+    unlockBodyScroll();
+    archiveChoiceItemId = null;
+  }
+  archiveChoiceCloseBtn.addEventListener('click', closeArchiveChoice);
+  archiveChoiceBackdrop.addEventListener('click', (e) => {
+    if(e.target === archiveChoiceBackdrop) closeArchiveChoice();
+  });
+  archiveChoiceArchiveBtn.addEventListener('click', () => {
+    const id = archiveChoiceItemId;
+    closeArchiveChoice();
+    if(id) archiveItem(id);
+  });
+  archiveChoiceDeleteBtn.addEventListener('click', async () => {
+    const id = archiveChoiceItemId;
+    const item = items.find(i => i.id === id);
+    closeArchiveChoice();
+    if(!item) return;
+    const ok = await askConfirm(t('confirm_delete') + ' « ' + item.title + ' » ' + t('confirm_delete_suffix'));
+    if(ok) removeItem(id);
   });
 
   // ---- Appui long sur une vignette : icônes Modifier / Supprimer + contour de sélection ----
@@ -1964,13 +2228,10 @@
       openEditForm(item);
     });
 
-    deleteBtn.addEventListener('click', async (e) => {
+    deleteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       deselectCard();
-      const ok = await askConfirm(t('confirm_delete') + ' « ' + item.title + ' » ' + t('confirm_delete_suffix'));
-      if(ok){
-        removeItem(item.id);
-      }
+      openArchiveChoice(item);
     });
   }
 
@@ -2124,9 +2385,121 @@
   const totalMonthlyEl = document.getElementById('totalCard').querySelector('[data-total-monthly]');
   const totalChartEl = document.getElementById('totalChart');
   const totalChartDatesEl = document.getElementById('totalChartDates');
+  const totalFilterBtn = document.getElementById('totalFilterBtn');
+
+  // ---- Filtre du bloc total (intervalle de dates + inclusion des archivés) ----
+  const totalFilterBackdrop = document.getElementById('totalFilterBackdrop');
+  const totalFilterCloseBtn = document.getElementById('totalFilterCloseBtn');
+  const totalFilterApplyBtn = document.getElementById('totalFilterApplyBtn');
+  const totalFilterResetBtn = document.getElementById('totalFilterResetBtn');
+  const totalFilterError = document.getElementById('totalFilterError');
+  const totalArchivedSegmented = document.getElementById('totalArchivedSegmented');
+
+  function refreshTotalFilterUI(){
+    document.getElementById('totalFromText').value = settings.totalFrom ? formatFRDate(new Date(settings.totalFrom)) : '';
+    document.getElementById('totalToText').value = settings.totalTo ? formatFRDate(new Date(settings.totalTo)) : '';
+    totalArchivedSegmented.querySelectorAll('button').forEach(btn => {
+      btn.classList.toggle('active', (btn.getAttribute('data-archived') === 'on') === settings.totalIncludeArchived);
+    });
+    totalFilterBtn.classList.toggle('active', !!(settings.totalFrom || settings.totalTo || settings.totalIncludeArchived));
+  }
+
+  totalFilterBtn.addEventListener('click', () => {
+    totalIncludeArchivedDraft = settings.totalIncludeArchived;
+    refreshTotalFilterUI();
+    totalFilterError.style.display = 'none';
+    totalFilterBackdrop.style.display = 'flex';
+    lockBodyScroll();
+  });
+  function closeTotalFilter(){
+    totalFilterBackdrop.style.display = 'none';
+    unlockBodyScroll();
+  }
+  totalFilterCloseBtn.addEventListener('click', closeTotalFilter);
+  totalFilterBackdrop.addEventListener('click', (e) => {
+    if(e.target === totalFilterBackdrop) closeTotalFilter();
+  });
+  document.getElementById('totalFromText').addEventListener('input', function(){ this.classList.remove('invalid'); });
+  document.getElementById('totalToText').addEventListener('input', function(){ this.classList.remove('invalid'); });
+
+  let totalIncludeArchivedDraft = false;
+  totalArchivedSegmented.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      totalIncludeArchivedDraft = btn.getAttribute('data-archived') === 'on';
+      totalArchivedSegmented.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  totalFilterResetBtn.addEventListener('click', () => {
+    settings.totalFrom = null;
+    settings.totalTo = null;
+    settings.totalIncludeArchived = false;
+    saveSettings();
+    refreshTotalFilterUI();
+    render();
+  });
+
+  totalFilterApplyBtn.addEventListener('click', () => {
+    const fromText = document.getElementById('totalFromText');
+    const toText = document.getElementById('totalToText');
+    totalFilterError.style.display = 'none';
+    fromText.classList.remove('invalid');
+    toText.classList.remove('invalid');
+
+    let fromDate = null, toDate = null;
+    if(fromText.value.trim() !== ''){
+      fromDate = parseFRDate(fromText.value);
+      if(!fromDate){
+        fromText.classList.add('invalid');
+        totalFilterError.textContent = t('total_filter_err_date');
+        totalFilterError.style.display = 'block';
+        return;
+      }
+    }
+    if(toText.value.trim() !== ''){
+      toDate = parseFRDate(toText.value);
+      if(!toDate){
+        toText.classList.add('invalid');
+        totalFilterError.textContent = t('total_filter_err_date');
+        totalFilterError.style.display = 'block';
+        return;
+      }
+    }
+    if(fromDate && toDate && toDate < fromDate){
+      toText.classList.add('invalid');
+      totalFilterError.textContent = t('total_filter_err_order');
+      totalFilterError.style.display = 'block';
+      return;
+    }
+
+    settings.totalFrom = fromDate ? fromDate.toISOString() : null;
+    settings.totalTo = toDate ? new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59).toISOString() : null;
+    settings.totalIncludeArchived = totalIncludeArchivedDraft;
+    saveSettings();
+    closeTotalFilter();
+    render();
+  });
+
+  // ---- Bandeau des comptes à rebours archivés ----
+  const archiveBanner = document.getElementById('archiveBanner');
+  const archiveBannerToggle = document.getElementById('archiveBannerToggle');
+  const archiveCountEl = document.getElementById('archiveCount');
+  const archiveList = document.getElementById('archiveList');
+  archiveBannerToggle.addEventListener('click', () => {
+    const open = archiveBanner.classList.toggle('open');
+    archiveList.style.display = open ? 'flex' : 'none';
+  });
 
   function creditItemsList(){
-    return items.filter(i => i.type === 'credit');
+    const rangeStart = settings.totalFrom ? new Date(settings.totalFrom).getTime() : -Infinity;
+    const rangeEnd = settings.totalTo ? new Date(settings.totalTo).getTime() : Infinity;
+    return items.filter(i => {
+      if(i.type !== 'credit') return false;
+      if(i.archived && !settings.totalIncludeArchived) return false;
+      const itemStart = new Date(i.startDate).getTime();
+      const itemEnd = new Date(i.endDate).getTime();
+      return itemEnd >= rangeStart && itemStart <= rangeEnd;
+    });
   }
 
   function updateTotalCard(){
@@ -2245,6 +2618,52 @@
     return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(2);
   }
 
+  function renderArchiveBanner(){
+    const archivedItems = items.filter(i => i.archived);
+    if(archivedItems.length === 0){
+      archiveBanner.style.display = 'none';
+      archiveBanner.classList.remove('open');
+      archiveList.style.display = 'none';
+      archiveList.innerHTML = '';
+      return;
+    }
+    archiveBanner.style.display = 'block';
+    archiveCountEl.textContent = archivedItems.length;
+
+    const sortedArchived = [...archivedItems].sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+    archiveList.innerHTML = sortedArchived.map(item => {
+      const color = colorFor(item);
+      const icon = iconFor(item);
+      return `
+      <div class="archive-item" data-id="${item.id}">
+        <div class="archive-item-icon" style="color:${color.main};">${renderIconMarkup(icon, 16)}</div>
+        <div class="archive-item-text">
+          <p class="archive-item-title">${escapeHtml(item.title)}</p>
+          <span class="archive-item-sub">${formatDate(item.endDate)}</span>
+        </div>
+        <div class="archive-item-actions">
+          <button type="button" class="archive-item-btn" data-restore aria-label="${t('action_unarchive')}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          </button>
+          <button type="button" class="archive-item-btn danger" data-delete aria-label="${t('action_delete')}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+    archiveList.querySelectorAll('.archive-item').forEach(rowEl => {
+      const id = rowEl.getAttribute('data-id');
+      rowEl.querySelector('[data-restore]').addEventListener('click', () => unarchiveItem(id));
+      rowEl.querySelector('[data-delete]').addEventListener('click', async () => {
+        const item = items.find(i => i.id === id);
+        if(!item) return;
+        const ok = await askConfirm(t('confirm_delete') + ' « ' + item.title + ' » ' + t('confirm_delete_suffix'));
+        if(ok) removeItem(id);
+      });
+    });
+  }
+
   function renderTotalCard(){
     const creditItems = creditItemsList();
     if(!settings.showTotal || creditItems.length === 0){
@@ -2277,17 +2696,19 @@
 
   // ---- Render ----
   function render(){
-    toggleFormBtn.classList.toggle('empty-hint', items.length === 0);
-    emptyArrow.style.display = items.length === 0 ? 'block' : 'none';
+    const activeItems = items.filter(i => !i.archived);
+    toggleFormBtn.classList.toggle('empty-hint', activeItems.length === 0);
+    emptyArrow.style.display = activeItems.length === 0 ? 'block' : 'none';
     renderTotalCard();
+    renderArchiveBanner();
 
-    if(items.length === 0){
+    if(activeItems.length === 0){
       cardsGrid.innerHTML = '';
       updateScrollAvailability();
       return;
     }
 
-    const sorted = [...items].sort((a, b) => {
+    const sorted = [...activeItems].sort((a, b) => {
       if(settings.sortMode === 'dateAsc') return new Date(a.endDate) - new Date(b.endDate);
       if(settings.sortMode === 'dateDesc') return new Date(b.endDate) - new Date(a.endDate);
       return (a.order || 0) - (b.order || 0);
