@@ -825,6 +825,17 @@
     color:var(--text-muted);
     letter-spacing:.02em;
   }
+  .app-version{
+    position:fixed;
+    bottom:calc(6px + env(safe-area-inset-bottom, 0px));
+    right:10px;
+    font-size:9px;
+    font-weight:600;
+    color:var(--text-muted);
+    opacity:.5;
+    pointer-events:none;
+    z-index:5;
+  }
 </style>
 </head>
 <body>
@@ -981,6 +992,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
+  <!-- APP_VERSION: incrémenter (v1.1 -> v1.2 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.1</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2142,11 +2155,16 @@
     const startMs = new Date(item.startDate).getTime();
     if(item.initialDate && typeof item.initialAmount === 'number'){
       const initMs = new Date(item.initialDate).getTime();
-      if(t <= initMs) return item.initialAmount;
+      if(t < initMs){
+        // Avant même la date du montant initial, ce crédit (et son historique)
+        // n'existe pas encore : il ne doit pas compter dans le total.
+        return 0;
+      }
       if(t < startMs && startMs > initMs){
         const frac = (t - initMs) / (startMs - initMs);
         return item.initialAmount + (item.amount - item.initialAmount) * frac;
       }
+      if(t < startMs) return item.initialAmount;
     } else if(t < startMs){
       // Pas d'historique renseigné : avant la date de départ, ce crédit n'existe
       // pas encore et ne doit pas compter dans le total (saut net à son démarrage).
