@@ -992,8 +992,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.1 -> v1.2 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.1</div>
+  <!-- APP_VERSION: incrémenter (v1.3 -> v1.3 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.3</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -1581,6 +1581,16 @@
       textEl.value = applyDateMask(textEl.value);
       const len = textEl.value.length;
       textEl.setSelectionRange(len, len);
+
+      // Vérification immédiate dès que jour et mois sont saisis (sans attendre l'année)
+      const digits = textEl.value.replace(/\D/g, '');
+      if(digits.length >= 4){
+        const day = parseInt(digits.slice(0, 2), 10);
+        const month = parseInt(digits.slice(2, 4), 10);
+        if(day < 1 || day > 31 || month < 1 || month > 12){
+          textEl.classList.add('invalid');
+        }
+      }
     });
   }
 
@@ -1672,12 +1682,6 @@
       if(end <= start){
         endText.classList.add('invalid');
         showError(t('err_end_after_start'));
-        return;
-      }
-      const todayMidnightCredit = new Date(); todayMidnightCredit.setHours(0, 0, 0, 0);
-      if(!editingId && end < todayMidnightCredit){
-        endText.classList.add('invalid');
-        showError(t('err_end_date_past'));
         return;
       }
       if(initialAmount !== null && initialAmount < amount){
