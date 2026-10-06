@@ -1157,8 +1157,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.12 -> v1.12 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.12</div>
+  <!-- APP_VERSION: incrémenter (v1.13 -> v1.13 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.13</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2585,10 +2585,11 @@
     let remainingSum = 0, monthlySum = 0;
     creditItems.forEach(item => {
       const startMs = new Date(item.startDate).getTime();
-      const hasHistory = item.initialDate && typeof item.initialAmount === 'number';
-      const active = now >= startMs || hasHistory;
+      const endMs = new Date(item.endDate).getTime();
       remainingSum += remainingWithHistory(item, now);
-      if(active){
+      // La mensualité ne compte que pour un crédit réellement en cours aujourd'hui :
+      // pas encore démarré (même avec un historique) ou déjà soldé = pas de mensualité.
+      if(now >= startMs && now <= endMs){
         const state = creditState(item, now);
         monthlySum += state.monthly + (item.insurance || 0);
       }
