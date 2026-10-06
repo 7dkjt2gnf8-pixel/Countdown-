@@ -1177,8 +1177,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.17 -> v1.17 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.17</div>
+  <!-- APP_VERSION: incrémenter (v1.18 -> v1.18 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.18</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2609,7 +2609,10 @@
     cachedCreditItems = items.filter(i => {
       if(i.type !== 'credit') return false;
       if(i.archived && !settings.totalIncludeArchived) return false;
-      const itemStart = new Date(i.startDate).getTime();
+      // Le début pris en compte pour le chevauchement est la date de montant initial
+      // si elle existe (historique), sinon la date de départ réelle du crédit —
+      // cohérent avec le calcul utilisé pour le graphique (getTotalChartRange).
+      const itemStart = i.initialDate ? new Date(i.initialDate).getTime() : new Date(i.startDate).getTime();
       const itemEnd = new Date(i.endDate).getTime();
       return itemEnd >= rangeStart && itemStart <= rangeEnd;
     });
@@ -2894,6 +2897,16 @@
       totalChartSelectedMs = null;
     }
     totalChartEl.innerHTML = generateTotalChartSVG(creditItems);
+
+    // Le montant affiché doit toujours refléter l'état courant (date sélectionnée au
+    // curseur, ou sinon aujourd'hui) dès que le bloc est régénéré — par ex. après
+    // l'application d'un filtre — plutôt que d'attendre le prochain tick.
+    if(totalChartSelectedMs !== null){
+      const {remainingSum} = totalFiguresAt(creditItems, totalChartSelectedMs);
+      totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
+    } else {
+      updateTotalCard();
+    }
     updateTotalChartCursorLabel();
 
     const span = maxEnd - minStart;
