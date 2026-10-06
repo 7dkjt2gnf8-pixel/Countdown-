@@ -1177,8 +1177,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.16 -> v1.16 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.16</div>
+  <!-- APP_VERSION: incrémenter (v1.17 -> v1.17 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.17</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2461,15 +2461,31 @@
   const totalArchivedSegmented = document.getElementById('totalArchivedSegmented');
 
   // ---- Roue de sélection d'année façon iOS ----
-  const YEAR_WHEEL_MIN = 1990;
-  const YEAR_WHEEL_MAX = 2070;
   const YEAR_ROW_H = 28;
 
-  function setupYearWheel(wheelId, trackId){
+  // Ne propose que les années couvertes par les crédits réellement enregistrés
+  // (du plus ancien montant initial/date de départ au plus tardif des dates de fin).
+  function getCreditYearRange(){
+    const creditItems = items.filter(i => i.type === 'credit');
+    if(creditItems.length === 0){
+      const y = new Date().getFullYear();
+      return {minYear: y, maxYear: y};
+    }
+    let minYear = Infinity, maxYear = -Infinity;
+    creditItems.forEach(item => {
+      const startY = (item.initialDate ? new Date(item.initialDate) : new Date(item.startDate)).getFullYear();
+      const endY = new Date(item.endDate).getFullYear();
+      if(startY < minYear) minYear = startY;
+      if(endY > maxYear) maxYear = endY;
+    });
+    return {minYear, maxYear};
+  }
+
+  function buildYearWheel(wheelId, trackId, minYear, maxYear){
     const wheel = document.getElementById(wheelId);
     const track = document.getElementById(trackId);
     let html = '<div class="year-wheel-item" data-year="">—</div>';
-    for(let y = YEAR_WHEEL_MIN; y <= YEAR_WHEEL_MAX; y++){
+    for(let y = minYear; y <= maxYear; y++){
       html += '<div class="year-wheel-item" data-year="' + y + '">' + y + '</div>';
     }
     track.innerHTML = html;
@@ -2483,15 +2499,13 @@
       rowEls.forEach((el, i) => el.classList.toggle('selected', i === idx));
     }
     let scrollEndTimer = null;
-    wheel.addEventListener('scroll', () => {
+    wheel.onscroll = () => {
       updateSelectedVisual();
       clearTimeout(scrollEndTimer);
       scrollEndTimer = setTimeout(updateSelectedVisual, 80);
-    });
+    };
     rowEls.forEach((el, i) => {
-      el.addEventListener('click', () => {
-        wheel.scrollTo({top: i * YEAR_ROW_H, behavior: 'smooth'});
-      });
+      el.onclick = () => wheel.scrollTo({top: i * YEAR_ROW_H, behavior: 'smooth'});
     });
     updateSelectedVisual();
 
@@ -2501,15 +2515,15 @@
         return y === '' ? null : parseInt(y, 10);
       },
       set(year){
-        const idx = year ? (year - YEAR_WHEEL_MIN + 1) : 0;
+        const idx = (year && year >= minYear && year <= maxYear) ? (year - minYear + 1) : 0;
         wheel.scrollTop = idx * YEAR_ROW_H;
         updateSelectedVisual();
       }
     };
   }
 
-  const totalFromWheel = setupYearWheel('totalFromWheel', 'totalFromWheelTrack');
-  const totalToWheel = setupYearWheel('totalToWheel', 'totalToWheelTrack');
+  let totalFromWheel = null;
+  let totalToWheel = null;
 
   function refreshTotalFilterUI(){
     totalFromWheel.set(settings.totalFrom ? new Date(settings.totalFrom).getFullYear() : null);
@@ -2522,6 +2536,9 @@
 
   totalFilterBtn.addEventListener('click', () => {
     totalIncludeArchivedDraft = settings.totalIncludeArchived;
+    const {minYear, maxYear} = getCreditYearRange();
+    totalFromWheel = buildYearWheel('totalFromWheel', 'totalFromWheelTrack', minYear, maxYear);
+    totalToWheel = buildYearWheel('totalToWheel', 'totalToWheelTrack', minYear, maxYear);
     totalFilterError.style.display = 'none';
     totalFilterBackdrop.style.display = 'flex';
     lockBodyScroll();
