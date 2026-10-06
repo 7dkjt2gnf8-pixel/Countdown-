@@ -392,12 +392,6 @@
   }
   .total-card .progress-track{background:#E5E5EA;}
   .total-card .progress-fill{background:#007AFF;}
-  .total-monthly{
-    font-size:13px;
-    font-weight:600;
-    color:#636366;
-    margin-top:8px;
-  }
   .total-chart-cursor-label{
     display:flex;
     align-items:center;
@@ -1044,7 +1038,6 @@
     <div class="total-money-row">
       <div class="total-amount" data-total-amount>— €</div>
     </div>
-    <div class="total-monthly" data-total-monthly></div>
     <button type="button" class="total-chart-cursor-label" id="totalChartCursorLabel" style="display:none;"></button>
     <div class="total-chart" id="totalChart"></div>
     <div class="total-chart-dates" id="totalChartDates"></div>
@@ -1173,8 +1166,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.14 -> v1.14 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.14</div>
+  <!-- APP_VERSION: incrémenter (v1.15 -> v1.15 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.15</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2444,7 +2437,6 @@
   let totalChartRange = null;
   const totalCardEl = document.getElementById('totalCard');
   const totalAmountEl = document.getElementById('totalCard').querySelector('[data-total-amount]');
-  const totalMonthlyEl = document.getElementById('totalCard').querySelector('[data-total-monthly]');
   const totalChartEl = document.getElementById('totalChart');
   const totalChartDatesEl = document.getElementById('totalChartDates');
   const totalFilterBtn = document.getElementById('totalFilterBtn');
@@ -2604,19 +2596,9 @@
   // réutilisé à la fois pour "aujourd'hui" (ticking en continu) et pour le curseur
   // déplacé manuellement sur la courbe du bloc total.
   function totalFiguresAt(creditItems, ms){
-    let remainingSum = 0, monthlySum = 0;
-    creditItems.forEach(item => {
-      const startMs = new Date(item.startDate).getTime();
-      const endMs = new Date(item.endDate).getTime();
-      remainingSum += remainingWithHistory(item, ms);
-      // La mensualité ne compte que pour un crédit réellement en cours à cette date :
-      // pas encore démarré (même avec un historique) ou déjà soldé = pas de mensualité.
-      if(ms >= startMs && ms <= endMs){
-        const state = creditState(item, ms);
-        monthlySum += state.monthly + (item.insurance || 0);
-      }
-    });
-    return {remainingSum, monthlySum};
+    let remainingSum = 0;
+    creditItems.forEach(item => { remainingSum += remainingWithHistory(item, ms); });
+    return {remainingSum};
   }
 
   function updateTotalCard(){
@@ -2626,9 +2608,8 @@
     // Tant qu'une date est sélectionnée manuellement sur le curseur, on ne doit pas
     // écraser l'affichage avec les valeurs d'aujourd'hui à chaque tick.
     if(totalChartSelectedMs !== null) return;
-    const {remainingSum, monthlySum} = totalFiguresAt(creditItems, Date.now());
+    const {remainingSum} = totalFiguresAt(creditItems, Date.now());
     totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
-    totalMonthlyEl.textContent = t('total_monthly') + ' : ' + monthlyFormatter.format(monthlySum) + ' €';
   }
 
   // Reconstitue le capital restant dû en tenant compte, le cas échéant, de la période
@@ -2853,9 +2834,8 @@
     updateTotalChartMarkerPosition(ms);
     updateTotalChartCursorLabel();
     const creditItems = creditItemsList();
-    const {remainingSum, monthlySum} = totalFiguresAt(creditItems, ms);
+    const {remainingSum} = totalFiguresAt(creditItems, ms);
     totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
-    totalMonthlyEl.textContent = t('total_monthly') + ' : ' + monthlyFormatter.format(monthlySum) + ' €';
   }
 
   totalChartEl.addEventListener('pointerdown', (e) => {
