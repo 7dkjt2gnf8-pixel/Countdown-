@@ -1029,7 +1029,6 @@
     <div class="total-money-row">
       <div class="total-amount" data-total-amount>— €</div>
     </div>
-    <div class="progress-track"><div class="progress-fill" data-total-progress></div></div>
     <div class="total-monthly" data-total-monthly></div>
     <div class="total-chart" id="totalChart"></div>
     <div class="total-chart-dates" id="totalChartDates"></div>
@@ -1158,8 +1157,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.11 -> v1.11 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.11</div>
+  <!-- APP_VERSION: incrémenter (v1.12 -> v1.12 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.12</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2422,7 +2421,6 @@
   // ---- Bloc total des crédits ----
   const totalCardEl = document.getElementById('totalCard');
   const totalAmountEl = document.getElementById('totalCard').querySelector('[data-total-amount]');
-  const totalProgressEl = document.getElementById('totalCard').querySelector('[data-total-progress]');
   const totalMonthlyEl = document.getElementById('totalCard').querySelector('[data-total-monthly]');
   const totalChartEl = document.getElementById('totalChart');
   const totalChartDatesEl = document.getElementById('totalChartDates');
@@ -2584,7 +2582,7 @@
     const creditItems = creditItemsList();
     if(creditItems.length === 0) return;
     const now = Date.now();
-    let remainingSum = 0, baseSum = 0, monthlySum = 0;
+    let remainingSum = 0, monthlySum = 0;
     creditItems.forEach(item => {
       const startMs = new Date(item.startDate).getTime();
       const hasHistory = item.initialDate && typeof item.initialAmount === 'number';
@@ -2592,14 +2590,10 @@
       remainingSum += remainingWithHistory(item, now);
       if(active){
         const state = creditState(item, now);
-        const base = (typeof item.initialAmount === 'number' && item.initialAmount > 0) ? item.initialAmount : item.amount;
-        baseSum += base;
         monthlySum += state.monthly + (item.insurance || 0);
       }
     });
-    const progress = baseSum > 0 ? Math.min(1, Math.max(0, (baseSum - remainingSum) / baseSum)) : 0;
     totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
-    totalProgressEl.style.width = (progress * 100) + '%';
     totalMonthlyEl.textContent = t('total_monthly') + ' : ' + monthlyFormatter.format(monthlySum) + ' €';
   }
 
@@ -2659,9 +2653,14 @@
       samples.push({tms, val: sum});
     }
     const maxVal = Math.max(...samples.map(s => s.val), 1);
+    const minVal = Math.min(...samples.map(s => s.val), maxVal);
+    // L'axe Y n'est volontairement pas calé sur zéro : il part du minimum réellement
+    // atteint sur l'intervalle, pour que les variations de la courbe soient bien visibles
+    // plutôt que tassées en haut du graphique.
+    const valSpan = Math.max(maxVal - minVal, 1);
 
     function xFor(tms){ return padL + ((tms - minStart) / (maxEnd - minStart)) * plotW; }
-    function yFor(val){ return padT + (1 - (val / maxVal)) * plotH; }
+    function yFor(val){ return padT + (1 - (val - minVal) / valSpan) * plotH; }
 
     let pathD = '';
     samples.forEach((s, i) => {
@@ -2681,6 +2680,7 @@
 
     const baseline = '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-opacity="0.3" stroke-width="1"></line>';
     const maxLabel = (maxVal / 1000).toFixed(0) + ' K€';
+    const minLabel = (minVal / 1000).toFixed(0) + ' K€';
 
     // Petit repère vertical sur l'axe à la date de départ ET de fin de chaque échéance
     let echeanceTicks = '';
@@ -2695,6 +2695,7 @@
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
       baseline +
       '<text x="' + padL + '" y="10" font-size="8" fill="currentColor" fill-opacity="0.7">' + maxLabel + '</text>' +
+      '<text x="' + padL + '" y="' + (padT + plotH - 3) + '" font-size="8" fill="currentColor" fill-opacity="0.5">' + minLabel + '</text>' +
       '<path d="' + pathD.trim() + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>' +
       echeanceTicks +
       marker +
