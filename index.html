@@ -1187,8 +1187,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.19 -> v1.19 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.19</div>
+  <!-- APP_VERSION: incrémenter (v1.20 -> v1.20 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.20</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2661,6 +2661,10 @@
     // Tant qu'une date est sélectionnée manuellement sur le curseur, on ne doit pas
     // écraser l'affichage avec les valeurs d'aujourd'hui à chaque tick.
     if(totalChartSelectedMs !== null) return;
+    // De même, si un filtre avec borne "Au" est actif, le montant affiché est figé
+    // au solde à cette date de fin d'intervalle (posé par renderTotalCard) — pas
+    // de décompte en direct tant que ce filtre est actif.
+    if(settings.totalTo) return;
     const {remainingSum} = totalFiguresAt(creditItems, Date.now());
     totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
   }
@@ -2921,11 +2925,16 @@
     }
     totalChartEl.innerHTML = generateTotalChartSVG(creditItems);
 
-    // Le montant affiché doit toujours refléter l'état courant (date sélectionnée au
-    // curseur, ou sinon aujourd'hui) dès que le bloc est régénéré — par ex. après
-    // l'application d'un filtre — plutôt que d'attendre le prochain tick.
+    // Le montant affiché doit toujours refléter l'état courant dès que le bloc est
+    // régénéré (après l'application d'un filtre, par ex.), par ordre de priorité :
+    // 1) date sélectionnée à la main sur le curseur (figée),
+    // 2) sinon, si un filtre avec borne "Au" est actif, solde figé à cette date de fin,
+    // 3) sinon, solde d'aujourd'hui en direct (ticking).
     if(totalChartSelectedMs !== null){
       const {remainingSum} = totalFiguresAt(creditItems, totalChartSelectedMs);
+      totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
+    } else if(settings.totalTo){
+      const {remainingSum} = totalFiguresAt(creditItems, new Date(settings.totalTo).getTime());
       totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
     } else {
       updateTotalCard();
