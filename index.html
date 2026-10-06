@@ -998,6 +998,10 @@
   .archive-item-btn.danger{color:var(--danger);}
 
   .app-footer{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:6px;
     text-align:center;
     margin-top:32px;
     font-size:12px;
@@ -1006,15 +1010,10 @@
     letter-spacing:.02em;
   }
   .app-version{
-    position:fixed;
-    bottom:calc(6px + env(safe-area-inset-bottom, 0px));
-    right:10px;
-    font-size:9px;
+    font-size:10px;
     font-weight:600;
     color:var(--text-muted);
     opacity:.5;
-    pointer-events:none;
-    z-index:5;
   }
 </style>
 </head>
@@ -1186,9 +1185,11 @@
   </div>
   </div>
 
-  <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.20 -> v1.20 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.20</div>
+  <footer class="app-footer">
+    <span id="footerText" data-i18n="footer">Designed by Mienos</span>
+    <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
+    <span class="app-version">v1.21</span>
+  </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
