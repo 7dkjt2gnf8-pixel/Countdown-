@@ -546,6 +546,52 @@
     cursor:pointer;
   }
   .settings-row{margin-bottom:16px;}
+  .year-wheels-row{
+    display:flex;
+    gap:14px;
+    margin-bottom:16px;
+  }
+  .year-wheel-col{flex:1; min-width:0;}
+  .year-wheel-col .settings-label{display:block; margin-bottom:6px;}
+  .year-wheel{
+    position:relative;
+    height:140px;
+    overflow-y:scroll;
+    scroll-snap-type:y mandatory;
+    -webkit-overflow-scrolling:touch;
+    border-radius:12px;
+    background:var(--bg);
+    scrollbar-width:none;
+  }
+  .year-wheel::-webkit-scrollbar{display:none;}
+  .year-wheel-track{display:flex; flex-direction:column; padding:56px 0;}
+  .year-wheel-item{
+    height:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    font-weight:600;
+    color:var(--text-muted);
+    scroll-snap-align:center;
+    font-variant-numeric:tabular-nums;
+    transition:color .1s ease, font-weight .1s ease;
+  }
+  .year-wheel-item.selected{
+    color:var(--text);
+    font-weight:800;
+    font-size:17px;
+  }
+  .year-wheel-highlight{
+    position:absolute;
+    top:50%;
+    left:6px; right:6px;
+    height:28px;
+    transform:translateY(-50%);
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    pointer-events:none;
+  }
   .settings-row:last-child{margin-bottom:0;}
   .settings-label{
     display:block;
@@ -1112,8 +1158,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.10 -> v1.10 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.10</div>
+  <!-- APP_VERSION: incrémenter (v1.11 -> v1.11 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.11</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -1213,17 +1259,20 @@
         <button type="button" id="totalFilterCloseBtn" class="settings-close-btn" aria-label="Fermer">✕</button>
       </div>
 
-      <div class="settings-row">
-        <label class="settings-label" data-i18n="total_filter_from">Du</label>
-        <div class="date-input-wrap">
-          <input type="text" id="totalFromText" placeholder="AAAA" inputmode="numeric" maxlength="4" autocomplete="off">
+      <div class="year-wheels-row">
+        <div class="year-wheel-col">
+          <label class="settings-label" data-i18n="total_filter_from">Du</label>
+          <div class="year-wheel" id="totalFromWheel">
+            <div class="year-wheel-track" id="totalFromWheelTrack"></div>
+            <div class="year-wheel-highlight"></div>
+          </div>
         </div>
-      </div>
-
-      <div class="settings-row">
-        <label class="settings-label" data-i18n="total_filter_to">Au</label>
-        <div class="date-input-wrap">
-          <input type="text" id="totalToText" placeholder="AAAA" inputmode="numeric" maxlength="4" autocomplete="off">
+        <div class="year-wheel-col">
+          <label class="settings-label" data-i18n="total_filter_to">Au</label>
+          <div class="year-wheel" id="totalToWheel">
+            <div class="year-wheel-track" id="totalToWheelTrack"></div>
+            <div class="year-wheel-highlight"></div>
+          </div>
         </div>
       </div>
 
@@ -2387,9 +2436,60 @@
   const totalFilterError = document.getElementById('totalFilterError');
   const totalArchivedSegmented = document.getElementById('totalArchivedSegmented');
 
+  // ---- Roue de sélection d'année façon iOS ----
+  const YEAR_WHEEL_MIN = 1990;
+  const YEAR_WHEEL_MAX = 2070;
+  const YEAR_ROW_H = 28;
+
+  function setupYearWheel(wheelId, trackId){
+    const wheel = document.getElementById(wheelId);
+    const track = document.getElementById(trackId);
+    let html = '<div class="year-wheel-item" data-year="">—</div>';
+    for(let y = YEAR_WHEEL_MIN; y <= YEAR_WHEEL_MAX; y++){
+      html += '<div class="year-wheel-item" data-year="' + y + '">' + y + '</div>';
+    }
+    track.innerHTML = html;
+    const rowEls = Array.from(track.children);
+
+    function currentIndex(){
+      return Math.max(0, Math.min(rowEls.length - 1, Math.round(wheel.scrollTop / YEAR_ROW_H)));
+    }
+    function updateSelectedVisual(){
+      const idx = currentIndex();
+      rowEls.forEach((el, i) => el.classList.toggle('selected', i === idx));
+    }
+    let scrollEndTimer = null;
+    wheel.addEventListener('scroll', () => {
+      updateSelectedVisual();
+      clearTimeout(scrollEndTimer);
+      scrollEndTimer = setTimeout(updateSelectedVisual, 80);
+    });
+    rowEls.forEach((el, i) => {
+      el.addEventListener('click', () => {
+        wheel.scrollTo({top: i * YEAR_ROW_H, behavior: 'smooth'});
+      });
+    });
+    updateSelectedVisual();
+
+    return {
+      get(){
+        const y = rowEls[currentIndex()].getAttribute('data-year');
+        return y === '' ? null : parseInt(y, 10);
+      },
+      set(year){
+        const idx = year ? (year - YEAR_WHEEL_MIN + 1) : 0;
+        wheel.scrollTop = idx * YEAR_ROW_H;
+        updateSelectedVisual();
+      }
+    };
+  }
+
+  const totalFromWheel = setupYearWheel('totalFromWheel', 'totalFromWheelTrack');
+  const totalToWheel = setupYearWheel('totalToWheel', 'totalToWheelTrack');
+
   function refreshTotalFilterUI(){
-    document.getElementById('totalFromText').value = settings.totalFrom ? String(new Date(settings.totalFrom).getFullYear()) : '';
-    document.getElementById('totalToText').value = settings.totalTo ? String(new Date(settings.totalTo).getFullYear()) : '';
+    totalFromWheel.set(settings.totalFrom ? new Date(settings.totalFrom).getFullYear() : null);
+    totalToWheel.set(settings.totalTo ? new Date(settings.totalTo).getFullYear() : null);
     totalArchivedSegmented.querySelectorAll('button').forEach(btn => {
       btn.classList.toggle('active', (btn.getAttribute('data-archived') === 'on') === settings.totalIncludeArchived);
     });
@@ -2398,10 +2498,12 @@
 
   totalFilterBtn.addEventListener('click', () => {
     totalIncludeArchivedDraft = settings.totalIncludeArchived;
-    refreshTotalFilterUI();
     totalFilterError.style.display = 'none';
     totalFilterBackdrop.style.display = 'flex';
     lockBodyScroll();
+    // Le positionnement des roues (scrollTop) doit avoir lieu une fois le modal visible,
+    // sinon l'élément n'a pas encore de boîte de mise en page et l'écriture est ignorée.
+    requestAnimationFrame(refreshTotalFilterUI);
   });
   function closeTotalFilter(){
     totalFilterBackdrop.style.display = 'none';
@@ -2411,8 +2513,6 @@
   totalFilterBackdrop.addEventListener('click', (e) => {
     if(e.target === totalFilterBackdrop) closeTotalFilter();
   });
-  document.getElementById('totalFromText').addEventListener('input', function(){ this.classList.remove('invalid'); this.value = this.value.replace(/\D/g, '').slice(0, 4); });
-  document.getElementById('totalToText').addEventListener('input', function(){ this.classList.remove('invalid'); this.value = this.value.replace(/\D/g, '').slice(0, 4); });
 
   let totalIncludeArchivedDraft = false;
   totalArchivedSegmented.querySelectorAll('button').forEach(btn => {
@@ -2432,33 +2532,12 @@
   });
 
   totalFilterApplyBtn.addEventListener('click', () => {
-    const fromText = document.getElementById('totalFromText');
-    const toText = document.getElementById('totalToText');
     totalFilterError.style.display = 'none';
-    fromText.classList.remove('invalid');
-    toText.classList.remove('invalid');
 
-    let fromYear = null, toYear = null;
-    if(fromText.value.trim() !== ''){
-      fromYear = parseInt(fromText.value, 10);
-      if(!fromYear || fromText.value.trim().length !== 4){
-        fromText.classList.add('invalid');
-        totalFilterError.textContent = t('total_filter_err_date');
-        totalFilterError.style.display = 'block';
-        return;
-      }
-    }
-    if(toText.value.trim() !== ''){
-      toYear = parseInt(toText.value, 10);
-      if(!toYear || toText.value.trim().length !== 4){
-        toText.classList.add('invalid');
-        totalFilterError.textContent = t('total_filter_err_date');
-        totalFilterError.style.display = 'block';
-        return;
-      }
-    }
+    const fromYear = totalFromWheel.get();
+    const toYear = totalToWheel.get();
+
     if(fromYear && toYear && toYear < fromYear){
-      toText.classList.add('invalid');
       totalFilterError.textContent = t('total_filter_err_order');
       totalFilterError.style.display = 'block';
       return;
@@ -2548,13 +2627,23 @@
     return creditState(item, t).remaining;
   }
 
-  function generateTotalChartSVG(creditItems){
-    if(creditItems.length === 0) return '';
+  // Intervalle affiché par le graphique du total : par défaut la pleine durée de vie
+  // des crédits inclus, mais strictement borné au filtre Du/Au si celui-ci est renseigné
+  // (le graphique ne doit alors montrer QUE cet intervalle, pas l'historique complet).
+  function getTotalChartRange(creditItems){
     const initialDatesMs = creditItems.filter(i => i.initialDate).map(i => new Date(i.initialDate).getTime());
     const startDatesMs = creditItems.map(i => new Date(i.startDate).getTime());
     const ends = creditItems.map(i => new Date(i.endDate).getTime());
-    const minStart = initialDatesMs.length > 0 ? Math.min(...initialDatesMs) : Math.min(...startDatesMs);
-    const maxEnd = Math.max(...ends);
+    let minStart = initialDatesMs.length > 0 ? Math.min(...initialDatesMs) : Math.min(...startDatesMs);
+    let maxEnd = Math.max(...ends);
+    if(settings.totalFrom) minStart = new Date(settings.totalFrom).getTime();
+    if(settings.totalTo) maxEnd = new Date(settings.totalTo).getTime();
+    return {minStart, maxEnd};
+  }
+
+  function generateTotalChartSVG(creditItems){
+    if(creditItems.length === 0) return '';
+    const {minStart, maxEnd} = getTotalChartRange(creditItems);
     if(maxEnd <= minStart) return '';
 
     const W = 300, H = 76, padL = 4, padR = 4, padT = 16, padB = 16;
@@ -2675,11 +2764,7 @@
     totalCardEl.style.display = 'block';
     totalChartEl.innerHTML = generateTotalChartSVG(creditItems);
 
-    const initialDatesMs = creditItems.filter(i => i.initialDate).map(i => new Date(i.initialDate).getTime());
-    const startDatesMs = creditItems.map(i => new Date(i.startDate).getTime());
-    const ends = creditItems.map(i => new Date(i.endDate).getTime());
-    const minStart = initialDatesMs.length > 0 ? Math.min(...initialDatesMs) : Math.min(...startDatesMs);
-    const maxEnd = Math.max(...ends);
+    const {minStart, maxEnd} = getTotalChartRange(creditItems);
     const span = maxEnd - minStart;
 
     if(span > 0){
