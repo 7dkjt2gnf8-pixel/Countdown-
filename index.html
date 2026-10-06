@@ -1112,8 +1112,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.9 -> v1.9 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.9</div>
+  <!-- APP_VERSION: incrémenter (v1.10 -> v1.10 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.10</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -1216,22 +1216,14 @@
       <div class="settings-row">
         <label class="settings-label" data-i18n="total_filter_from">Du</label>
         <div class="date-input-wrap">
-          <input type="text" id="totalFromText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
-          <div class="calendar-btn-wrap">
-            <button type="button" class="calendar-btn" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></button>
-            <input type="date" id="totalFromHidden" class="native-picker-overlay" aria-label="Choisir dans le calendrier">
-          </div>
+          <input type="text" id="totalFromText" placeholder="AAAA" inputmode="numeric" maxlength="4" autocomplete="off">
         </div>
       </div>
 
       <div class="settings-row">
         <label class="settings-label" data-i18n="total_filter_to">Au</label>
         <div class="date-input-wrap">
-          <input type="text" id="totalToText" placeholder="JJ/MM/AAAA" inputmode="numeric" autocomplete="off">
-          <div class="calendar-btn-wrap">
-            <button type="button" class="calendar-btn" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></button>
-            <input type="date" id="totalToHidden" class="native-picker-overlay" aria-label="Choisir dans le calendrier">
-          </div>
+          <input type="text" id="totalToText" placeholder="AAAA" inputmode="numeric" maxlength="4" autocomplete="off">
         </div>
       </div>
 
@@ -1360,7 +1352,7 @@
       total_filter_reset: 'Réinitialiser',
       total_filter_apply: 'Appliquer',
       total_filter_err_order: 'La date "Au" doit être après la date "Du".',
-      total_filter_err_date: 'Date invalide (JJ/MM/AAAA).',
+      total_filter_err_date: 'Année invalide (AAAA).',
       action_edit: 'Modifier',
       action_delete: 'Supprimer',
       footer: 'Designed by Mienos'
@@ -1441,7 +1433,7 @@
       total_filter_reset: 'Reset',
       total_filter_apply: 'Apply',
       total_filter_err_order: 'The "To" date must be after the "From" date.',
-      total_filter_err_date: 'Invalid date (DD/MM/YYYY).',
+      total_filter_err_date: 'Invalid year (YYYY).',
       action_edit: 'Edit',
       action_delete: 'Delete',
       footer: 'Designed by Mienos'
@@ -1835,8 +1827,6 @@
   setupTimePicker('endTimeText', 'endTimeHidden');
   setupDatePicker('startDateText', 'startDateHidden');
   setupDatePicker('initialDateText', 'initialDateHidden');
-  setupDatePicker('totalFromText', 'totalFromHidden');
-  setupDatePicker('totalToText', 'totalToHidden');
   setupDatePicker('creditEndDateText', 'creditEndDateHidden');
 
   // ---- Form submit (création ou édition) ----
@@ -2398,8 +2388,8 @@
   const totalArchivedSegmented = document.getElementById('totalArchivedSegmented');
 
   function refreshTotalFilterUI(){
-    document.getElementById('totalFromText').value = settings.totalFrom ? formatFRDate(new Date(settings.totalFrom)) : '';
-    document.getElementById('totalToText').value = settings.totalTo ? formatFRDate(new Date(settings.totalTo)) : '';
+    document.getElementById('totalFromText').value = settings.totalFrom ? String(new Date(settings.totalFrom).getFullYear()) : '';
+    document.getElementById('totalToText').value = settings.totalTo ? String(new Date(settings.totalTo).getFullYear()) : '';
     totalArchivedSegmented.querySelectorAll('button').forEach(btn => {
       btn.classList.toggle('active', (btn.getAttribute('data-archived') === 'on') === settings.totalIncludeArchived);
     });
@@ -2421,8 +2411,8 @@
   totalFilterBackdrop.addEventListener('click', (e) => {
     if(e.target === totalFilterBackdrop) closeTotalFilter();
   });
-  document.getElementById('totalFromText').addEventListener('input', function(){ this.classList.remove('invalid'); });
-  document.getElementById('totalToText').addEventListener('input', function(){ this.classList.remove('invalid'); });
+  document.getElementById('totalFromText').addEventListener('input', function(){ this.classList.remove('invalid'); this.value = this.value.replace(/\D/g, '').slice(0, 4); });
+  document.getElementById('totalToText').addEventListener('input', function(){ this.classList.remove('invalid'); this.value = this.value.replace(/\D/g, '').slice(0, 4); });
 
   let totalIncludeArchivedDraft = false;
   totalArchivedSegmented.querySelectorAll('button').forEach(btn => {
@@ -2448,10 +2438,10 @@
     fromText.classList.remove('invalid');
     toText.classList.remove('invalid');
 
-    let fromDate = null, toDate = null;
+    let fromYear = null, toYear = null;
     if(fromText.value.trim() !== ''){
-      fromDate = parseFRDate(fromText.value);
-      if(!fromDate){
+      fromYear = parseInt(fromText.value, 10);
+      if(!fromYear || fromText.value.trim().length !== 4){
         fromText.classList.add('invalid');
         totalFilterError.textContent = t('total_filter_err_date');
         totalFilterError.style.display = 'block';
@@ -2459,23 +2449,23 @@
       }
     }
     if(toText.value.trim() !== ''){
-      toDate = parseFRDate(toText.value);
-      if(!toDate){
+      toYear = parseInt(toText.value, 10);
+      if(!toYear || toText.value.trim().length !== 4){
         toText.classList.add('invalid');
         totalFilterError.textContent = t('total_filter_err_date');
         totalFilterError.style.display = 'block';
         return;
       }
     }
-    if(fromDate && toDate && toDate < fromDate){
+    if(fromYear && toYear && toYear < fromYear){
       toText.classList.add('invalid');
       totalFilterError.textContent = t('total_filter_err_order');
       totalFilterError.style.display = 'block';
       return;
     }
 
-    settings.totalFrom = fromDate ? fromDate.toISOString() : null;
-    settings.totalTo = toDate ? new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59).toISOString() : null;
+    settings.totalFrom = fromYear ? new Date(fromYear, 0, 1).toISOString() : null;
+    settings.totalTo = toYear ? new Date(toYear, 11, 31, 23, 59, 59).toISOString() : null;
     settings.totalIncludeArchived = totalIncludeArchivedDraft;
     saveSettings();
     closeTotalFilter();
