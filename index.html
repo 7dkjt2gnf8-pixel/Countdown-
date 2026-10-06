@@ -392,16 +392,24 @@
   }
   .total-card .progress-track{background:#E5E5EA;}
   .total-card .progress-fill{background:#007AFF;}
-  .total-chart-cursor-label{
+  .total-chart-cursor-row{
     display:flex;
     align-items:center;
-    gap:5px;
+    justify-content:space-between;
+    gap:8px;
     margin-top:6px;
+  }
+  .total-chart-cursor-date{
+    font-size:11.5px;
+    font-weight:700;
+    color:#007AFF;
+  }
+  .total-chart-cursor-reset{
     background:#EAF2FF;
     color:#007AFF;
     border:none;
     border-radius:8px;
-    padding:4px 9px;
+    padding:4px 10px;
     font-family:inherit;
     font-size:11px;
     font-weight:700;
@@ -1038,7 +1046,10 @@
     <div class="total-money-row">
       <div class="total-amount" data-total-amount>— €</div>
     </div>
-    <button type="button" class="total-chart-cursor-label" id="totalChartCursorLabel" style="display:none;"></button>
+    <div class="total-chart-cursor-row" id="totalChartCursorRow" style="display:none;">
+      <span class="total-chart-cursor-date" id="totalChartCursorDate"></span>
+      <button type="button" class="total-chart-cursor-reset" id="totalChartCursorReset" data-i18n="total_cursor_reset">Aujourd'hui</button>
+    </div>
     <div class="total-chart" id="totalChart"></div>
     <div class="total-chart-dates" id="totalChartDates"></div>
   </div>
@@ -1166,8 +1177,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.15 -> v1.15 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.15</div>
+  <!-- APP_VERSION: incrémenter (v1.16 -> v1.16 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.16</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -2778,17 +2789,19 @@
   }
 
   // ---- Curseur interactif sur la courbe du bloc total ----
-  const totalChartCursorLabel = document.getElementById('totalChartCursorLabel');
+  const totalChartCursorRow = document.getElementById('totalChartCursorRow');
+  const totalChartCursorDate = document.getElementById('totalChartCursorDate');
+  const totalChartCursorReset = document.getElementById('totalChartCursorReset');
 
   function updateTotalChartCursorLabel(){
     if(totalChartSelectedMs === null){
-      totalChartCursorLabel.style.display = 'none';
+      totalChartCursorRow.style.display = 'none';
       return;
     }
-    totalChartCursorLabel.style.display = 'flex';
-    totalChartCursorLabel.textContent = formatFRDate(new Date(totalChartSelectedMs)) + '  ·  ' + t('total_cursor_reset');
+    totalChartCursorRow.style.display = 'flex';
+    totalChartCursorDate.textContent = formatFRDate(new Date(totalChartSelectedMs));
   }
-  totalChartCursorLabel.addEventListener('click', () => {
+  totalChartCursorReset.addEventListener('click', () => {
     totalChartSelectedMs = null;
     updateTotalChartCursorLabel();
     renderTotalCard();
