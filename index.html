@@ -398,7 +398,22 @@
     color:#636366;
     margin-top:8px;
   }
-  .total-chart{margin-top:12px; color:#007AFF;}
+  .total-chart-cursor-label{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin-top:6px;
+    background:#EAF2FF;
+    color:#007AFF;
+    border:none;
+    border-radius:8px;
+    padding:4px 9px;
+    font-family:inherit;
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .total-chart{margin-top:12px; color:#007AFF; touch-action:pan-y;}
   .total-chart svg{display:block; width:100%; height:72px;}
   .total-chart-dates{
     position:relative;
@@ -1030,6 +1045,7 @@
       <div class="total-amount" data-total-amount>— €</div>
     </div>
     <div class="total-monthly" data-total-monthly></div>
+    <button type="button" class="total-chart-cursor-label" id="totalChartCursorLabel" style="display:none;"></button>
     <div class="total-chart" id="totalChart"></div>
     <div class="total-chart-dates" id="totalChartDates"></div>
   </div>
@@ -1157,8 +1173,8 @@
   </div>
 
   <footer class="app-footer" id="footerText" data-i18n="footer">Designed by Mienos</footer>
-  <!-- APP_VERSION: incrémenter (v1.13 -> v1.13 -> ...) à chaque modification du fichier -->
-  <div class="app-version">v1.13</div>
+  <!-- APP_VERSION: incrémenter (v1.14 -> v1.14 -> ...) à chaque modification du fichier -->
+  <div class="app-version">v1.14</div>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
     <div class="confirm-box settings-box">
@@ -1399,6 +1415,7 @@
       total_filter_archived: 'Inclure les archivés',
       total_filter_reset: 'Réinitialiser',
       total_filter_apply: 'Appliquer',
+      total_cursor_reset: 'Revenir à aujourd\'hui',
       total_filter_err_order: 'La date "Au" doit être après la date "Du".',
       total_filter_err_date: 'Année invalide (AAAA).',
       action_edit: 'Modifier',
@@ -1480,6 +1497,7 @@
       total_filter_archived: 'Include archived',
       total_filter_reset: 'Reset',
       total_filter_apply: 'Apply',
+      total_cursor_reset: 'Back to today',
       total_filter_err_order: 'The "To" date must be after the "From" date.',
       total_filter_err_date: 'Invalid year (YYYY).',
       action_edit: 'Edit',
@@ -2419,6 +2437,11 @@
   }
 
   // ---- Bloc total des crédits ----
+  // Date actuellement pointée à la main sur la courbe du bloc total (null = mode "aujourd'hui", live)
+  let totalChartSelectedMs = null;
+  // Intervalle [minStart, maxEnd] courant du graphique, mémorisé pour convertir une position
+  // de glissement (x en pixels) en date, et vice-versa.
+  let totalChartRange = null;
   const totalCardEl = document.getElementById('totalCard');
   const totalAmountEl = document.getElementById('totalCard').querySelector('[data-total-amount]');
   const totalMonthlyEl = document.getElementById('totalCard').querySelector('[data-total-monthly]');
@@ -2577,23 +2600,33 @@
     return cachedCreditItems;
   }
 
-  function updateTotalCard(){
-    if(!settings.showTotal) return;
-    const creditItems = creditItemsList();
-    if(creditItems.length === 0) return;
-    const now = Date.now();
+  // Calcule le solde cumulé et la mensualité cumulée à une date donnée (ms) —
+  // réutilisé à la fois pour "aujourd'hui" (ticking en continu) et pour le curseur
+  // déplacé manuellement sur la courbe du bloc total.
+  function totalFiguresAt(creditItems, ms){
     let remainingSum = 0, monthlySum = 0;
     creditItems.forEach(item => {
       const startMs = new Date(item.startDate).getTime();
       const endMs = new Date(item.endDate).getTime();
-      remainingSum += remainingWithHistory(item, now);
-      // La mensualité ne compte que pour un crédit réellement en cours aujourd'hui :
+      remainingSum += remainingWithHistory(item, ms);
+      // La mensualité ne compte que pour un crédit réellement en cours à cette date :
       // pas encore démarré (même avec un historique) ou déjà soldé = pas de mensualité.
-      if(now >= startMs && now <= endMs){
-        const state = creditState(item, now);
+      if(ms >= startMs && ms <= endMs){
+        const state = creditState(item, ms);
         monthlySum += state.monthly + (item.insurance || 0);
       }
     });
+    return {remainingSum, monthlySum};
+  }
+
+  function updateTotalCard(){
+    if(!settings.showTotal) return;
+    const creditItems = creditItemsList();
+    if(creditItems.length === 0) return;
+    // Tant qu'une date est sélectionnée manuellement sur le curseur, on ne doit pas
+    // écraser l'affichage avec les valeurs d'aujourd'hui à chaque tick.
+    if(totalChartSelectedMs !== null) return;
+    const {remainingSum, monthlySum} = totalFiguresAt(creditItems, Date.now());
     totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
     totalMonthlyEl.textContent = t('total_monthly') + ' : ' + monthlyFormatter.format(monthlySum) + ' €';
   }
@@ -2668,15 +2701,20 @@
       pathD += (i === 0 ? 'M' : 'L') + xFor(s.tms).toFixed(1) + ',' + yFor(s.val).toFixed(1) + ' ';
     });
 
+    // Mémorisé pour que le glissement manuel du curseur puisse convertir une position
+    // en pixels vers une date, et une date vers une position verticale sur la courbe.
+    totalChartRange = {minStart, maxEnd, padL, padR, padT, padB, plotW, plotH, minVal, maxVal, valSpan, W, H};
+
     const now = Date.now();
+    const markerMs = Math.min(maxEnd, Math.max(minStart, totalChartSelectedMs !== null ? totalChartSelectedMs : now));
     let marker = '';
-    if(now >= minStart && now <= maxEnd){
-      let nowSum = 0;
-      creditItems.forEach(item => { nowSum += remainingWithHistory(item, now); });
-      const mx = xFor(now).toFixed(1);
-      const my = yFor(nowSum).toFixed(1);
-      marker = '<line x1="' + mx + '" y1="' + padT + '" x2="' + mx + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-opacity="0.35" stroke-width="1" stroke-dasharray="2,2"></line>' +
-               '<circle cx="' + mx + '" cy="' + my + '" r="2.8" fill="currentColor"></circle>';
+    if(markerMs >= minStart && markerMs <= maxEnd){
+      let markerSum = 0;
+      creditItems.forEach(item => { markerSum += remainingWithHistory(item, markerMs); });
+      const mx = xFor(markerMs).toFixed(1);
+      const my = yFor(markerSum).toFixed(1);
+      marker = '<line id="totalChartMarkerLine" x1="' + mx + '" y1="' + padT + '" x2="' + mx + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-opacity="0.35" stroke-width="1" stroke-dasharray="2,2"></line>' +
+               '<circle id="totalChartMarkerDot" cx="' + mx + '" cy="' + my + '" r="3.2" fill="currentColor"></circle>';
     }
 
     const baseline = '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-opacity="0.3" stroke-width="1"></line>';
@@ -2693,13 +2731,14 @@
       });
     });
 
-    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+    return '<svg id="totalChartSvg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="touch-action:pan-y;">' +
       baseline +
       '<text x="' + padL + '" y="10" font-size="8" fill="currentColor" fill-opacity="0.7">' + maxLabel + '</text>' +
       '<text x="' + padL + '" y="' + (padT + plotH - 3) + '" font-size="8" fill="currentColor" fill-opacity="0.5">' + minLabel + '</text>' +
       '<path d="' + pathD.trim() + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>' +
       echeanceTicks +
       marker +
+      '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="transparent" id="totalChartHitArea"></rect>' +
     '</svg>';
   }
 
@@ -2757,6 +2796,81 @@
     });
   }
 
+  // ---- Curseur interactif sur la courbe du bloc total ----
+  const totalChartCursorLabel = document.getElementById('totalChartCursorLabel');
+
+  function updateTotalChartCursorLabel(){
+    if(totalChartSelectedMs === null){
+      totalChartCursorLabel.style.display = 'none';
+      return;
+    }
+    totalChartCursorLabel.style.display = 'flex';
+    totalChartCursorLabel.textContent = formatFRDate(new Date(totalChartSelectedMs)) + '  ·  ' + t('total_cursor_reset');
+  }
+  totalChartCursorLabel.addEventListener('click', () => {
+    totalChartSelectedMs = null;
+    updateTotalChartCursorLabel();
+    renderTotalCard();
+  });
+
+  function totalChartXToMs(clientX){
+    if(!totalChartRange) return null;
+    const svg = document.getElementById('totalChartSvg');
+    if(!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    if(rect.width === 0) return null;
+    const relX = (clientX - rect.left) / rect.width;
+    const svgX = relX * totalChartRange.W;
+    const frac = (svgX - totalChartRange.padL) / totalChartRange.plotW;
+    const clampedFrac = Math.min(1, Math.max(0, frac));
+    return totalChartRange.minStart + clampedFrac * (totalChartRange.maxEnd - totalChartRange.minStart);
+  }
+
+  function updateTotalChartMarkerPosition(ms){
+    if(!totalChartRange) return;
+    const lineEl = document.getElementById('totalChartMarkerLine');
+    const dotEl = document.getElementById('totalChartMarkerDot');
+    if(!lineEl || !dotEl) return;
+    const {minStart, maxEnd, padL, plotW, padT, plotH, minVal, valSpan} = totalChartRange;
+    const xFor = (tms) => padL + ((tms - minStart) / (maxEnd - minStart)) * plotW;
+    const yFor = (val) => padT + (1 - (val - minVal) / valSpan) * plotH;
+    let sum = 0;
+    creditItemsList().forEach(item => { sum += remainingWithHistory(item, ms); });
+    const mx = xFor(ms).toFixed(1);
+    const my = yFor(sum).toFixed(1);
+    lineEl.setAttribute('x1', mx);
+    lineEl.setAttribute('x2', mx);
+    dotEl.setAttribute('cx', mx);
+    dotEl.setAttribute('cy', my);
+  }
+
+  let totalChartDragging = false;
+
+  function handleTotalChartDragTo(clientX){
+    const ms = totalChartXToMs(clientX);
+    if(ms === null) return;
+    totalChartSelectedMs = ms;
+    updateTotalChartMarkerPosition(ms);
+    updateTotalChartCursorLabel();
+    const creditItems = creditItemsList();
+    const {remainingSum, monthlySum} = totalFiguresAt(creditItems, ms);
+    totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
+    totalMonthlyEl.textContent = t('total_monthly') + ' : ' + monthlyFormatter.format(monthlySum) + ' €';
+  }
+
+  totalChartEl.addEventListener('pointerdown', (e) => {
+    if(!totalChartRange) return;
+    totalChartDragging = true;
+    totalChartEl.setPointerCapture(e.pointerId);
+    handleTotalChartDragTo(e.clientX);
+  });
+  totalChartEl.addEventListener('pointermove', (e) => {
+    if(!totalChartDragging) return;
+    handleTotalChartDragTo(e.clientX);
+  });
+  totalChartEl.addEventListener('pointerup', () => { totalChartDragging = false; });
+  totalChartEl.addEventListener('pointercancel', () => { totalChartDragging = false; });
+
   function renderTotalCard(){
     const creditItems = creditItemsList();
     if(!settings.showTotal || creditItems.length === 0){
@@ -2764,9 +2878,14 @@
       return;
     }
     totalCardEl.style.display = 'block';
-    totalChartEl.innerHTML = generateTotalChartSVG(creditItems);
 
     const {minStart, maxEnd} = getTotalChartRange(creditItems);
+    if(totalChartSelectedMs !== null && (totalChartSelectedMs < minStart || totalChartSelectedMs > maxEnd)){
+      totalChartSelectedMs = null;
+    }
+    totalChartEl.innerHTML = generateTotalChartSVG(creditItems);
+    updateTotalChartCursorLabel();
+
     const span = maxEnd - minStart;
 
     if(span > 0){
