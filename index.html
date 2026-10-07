@@ -407,6 +407,7 @@
     justify-content:space-between;
     gap:8px;
     margin-top:6px;
+    height:24px;
   }
   .total-chart-cursor-date{
     font-size:11.5px;
@@ -428,6 +429,8 @@
   .total-chart svg{display:block; width:100%; height:72px;}
   .total-chart-dates{
     position:relative;
+    touch-action:pan-y;
+    cursor:ew-resize;
     height:14px;
     margin-top:2px;
     transition:height .15s ease;
@@ -1055,12 +1058,12 @@
     <div class="total-money-row">
       <div class="total-amount" data-total-amount>— €</div>
     </div>
-    <div class="total-chart-cursor-row" id="totalChartCursorRow" style="display:none;">
+    <div class="total-chart" id="totalChart"></div>
+    <div class="total-chart-dates" id="totalChartDates"></div>
+    <div class="total-chart-cursor-row" id="totalChartCursorRow" style="visibility:hidden;">
       <span class="total-chart-cursor-date" id="totalChartCursorDate"></span>
       <button type="button" class="total-chart-cursor-reset" id="totalChartCursorReset" data-i18n="total_cursor_reset">Aujourd'hui</button>
     </div>
-    <div class="total-chart" id="totalChart"></div>
-    <div class="total-chart-dates" id="totalChartDates"></div>
   </div>
 
   <div class="cards-grid" id="cardsGrid"></div>
@@ -1188,7 +1191,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.22</span>
+    <span class="app-version">v1.23</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -2842,10 +2845,10 @@
 
   function updateTotalChartCursorLabel(){
     if(totalChartSelectedMs === null){
-      totalChartCursorRow.style.display = 'none';
+      totalChartCursorRow.style.visibility = 'hidden';
       return;
     }
-    totalChartCursorRow.style.display = 'flex';
+    totalChartCursorRow.style.visibility = 'visible';
     totalChartCursorDate.textContent = formatFRDate(new Date(totalChartSelectedMs));
   }
   totalChartCursorReset.addEventListener('click', () => {
@@ -2898,18 +2901,40 @@
     totalAmountEl.textContent = formatMoney(remainingSum) + ' €';
   }
 
-  totalChartEl.addEventListener('pointerdown', (e) => {
-    if(!totalChartRange) return;
-    totalChartDragging = true;
-    totalChartEl.setPointerCapture(e.pointerId);
-    handleTotalChartDragTo(e.clientX);
-  });
-  totalChartEl.addEventListener('pointermove', (e) => {
-    if(!totalChartDragging) return;
-    handleTotalChartDragTo(e.clientX);
-  });
-  totalChartEl.addEventListener('pointerup', () => { totalChartDragging = false; });
-  totalChartEl.addEventListener('pointercancel', () => { totalChartDragging = false; });
+  function bindChartDrag(el){
+    let sx=0, sy=0, active=false, moved=false, pid=null;
+    el.addEventListener('pointerdown', (e) => {
+      if(!totalChartRange) return;
+      sx=e.clientX; sy=e.clientY; active=true; moved=false; pid=e.pointerId;
+      totalChartDragging = true;
+      if(e.pointerType === 'mouse'){
+        try{ el.setPointerCapture(pid); }catch(_){}
+        moved = true;
+        handleTotalChartDragTo(e.clientX);
+      }
+    });
+    el.addEventListener('pointermove', (e) => {
+      if(!active) return;
+      if(!moved){
+        const dx=Math.abs(e.clientX-sx), dy=Math.abs(e.clientY-sy);
+        if(dx>6 && dx>dy){
+          moved = true;
+          try{ el.setPointerCapture(pid); }catch(_){}
+        } else return;
+      }
+      handleTotalChartDragTo(e.clientX);
+    });
+    el.addEventListener('pointerup', (e) => {
+      if(active && !moved){
+        const dx=Math.abs(e.clientX-sx), dy=Math.abs(e.clientY-sy);
+        if(dx<6 && dy<6) handleTotalChartDragTo(e.clientX); // simple tap
+      }
+      active=false; totalChartDragging=false;
+    });
+    el.addEventListener('pointercancel', () => { active=false; totalChartDragging=false; });
+  }
+  bindChartDrag(totalChartEl);
+  bindChartDrag(totalChartDatesEl);
 
   function renderTotalCard(){
     const creditItems = creditItemsList();
