@@ -443,7 +443,7 @@
     transition:height .15s ease;
   }
   .total-chart-dates span.first{ transform-origin:0 0; transform:rotate(30deg); }
-  .total-chart-dates i{position:absolute; top:-3px; height:14px; width:1px; background:#9CC4FF; transform:translateX(-.5px);}
+  .total-chart-dates i{position:absolute; top:-11px; height:14px; width:1px; background:#9CC4FF; transform:translateX(-.5px);}
   .total-chart-dates span{
     position:absolute;
     top:0;
@@ -1201,7 +1201,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.31</span>
+    <span class="app-version">v1.32</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -2996,13 +2996,42 @@
 
       // Si deux dates sont trop proches pour tenir côte à côte, on les répartit
       // sur des lignes alternées plutôt que de les laisser se chevaucher.
-      // Dates inclinées à 45° : plus de chevauchement, une seule ligne suffit.
-      const placed = markers.map(ms => ({ms, pct: Math.min(100, Math.max(0, ((ms - minStart) / span) * 100))}));
-      totalChartDatesEl.style.height = '34px';
-      totalChartDatesEl.innerHTML = placed.map(p => p.pct < 12
-        ? '<i style="left:' + p.pct.toFixed(2) + '%;"></i><span class="first" style="left:calc(' + p.pct.toFixed(2) + '% + 6px);">' + formatShortDate(p.ms) + '</span>'
-        : '<i style="left:' + p.pct.toFixed(2) + '%;"></i><span style="right:calc(' + (100 - p.pct).toFixed(2) + '% + 6px);">' + formatShortDate(p.ms) + '</span>'
-      ).join('');
+      // Dates inclinées (30°) avec trait de jonction vers l'abscisse.
+      // Positions calculées comme dans le SVG (marges padL/padR incluses),
+      // puis réparties sur plusieurs niveaux si elles risquent de se croiser.
+      const R = totalChartRange;
+      const wPx = totalChartDatesEl.clientWidth || 300;
+      const ROW_H = 12;
+      const placed = markers.map(ms => {
+        const frac = (ms - minStart) / span;
+        const xpct = (R.padL + frac * R.plotW) / R.W * 100;
+        const x = xpct / 100 * wPx;
+        const label = formatShortDate(ms);
+        const fp = label.length * 5.3 * 0.866 + 8;
+        const first = x - fp < 0;
+        return {xpct, x, label, first, lo: first ? x - 1 : x - fp, hi: first ? x + fp : x + 1, row: 0};
+      });
+      const MAX_ROW = 3;
+      const lastHi = [-Infinity, -Infinity, -Infinity, -Infinity];
+      placed.forEach(p => {
+        let chosen = MAX_ROW;
+        for(let r = 0; r <= MAX_ROW; r++){
+          if(p.lo < lastHi[r] + 2) continue;
+          const crossed = placed.some(q => q !== p && q.placedRow !== undefined && q.row > r && q.x > p.lo - 1 && q.x < p.hi + 1);
+          if(!crossed){ chosen = r; break; }
+        }
+        p.row = chosen; p.placedRow = chosen;
+        lastHi[chosen] = Math.max(lastHi[chosen], p.hi);
+      });
+      const maxRow = Math.max(0, ...placed.map(p => p.row));
+      totalChartDatesEl.style.height = (maxRow * ROW_H + 34) + 'px';
+      totalChartDatesEl.innerHTML = placed.map(p => {
+        const top = p.row * ROW_H;
+        const conn = '<i style="left:' + p.xpct.toFixed(2) + '%; height:' + (top + 22) + 'px;"></i>';
+        return p.first
+          ? conn + '<span class="first" style="left:calc(' + p.xpct.toFixed(2) + '% + 6px); top:' + top + 'px;">' + p.label + '</span>'
+          : conn + '<span style="right:calc(' + (100 - p.xpct).toFixed(2) + '% + 6px); top:' + top + 'px;">' + p.label + '</span>';
+      }).join('');
     } else {
       totalChartDatesEl.innerHTML = '';
     }
