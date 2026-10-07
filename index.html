@@ -410,6 +410,8 @@
     height:24px;
   }
   .total-chart-cursor-date{
+    margin-left:auto;
+    white-space:nowrap;
     font-size:11.5px;
     font-weight:700;
     color:#007AFF;
@@ -424,6 +426,11 @@
     font-size:11px;
     font-weight:700;
     cursor:pointer;
+    margin-left:0;
+    margin-right:0;
+    flex-shrink:0;
+    width:26px; height:26px; padding:0;
+    display:inline-flex; align-items:center; justify-content:center;
   }
   .total-chart{margin-top:12px; color:#007AFF; touch-action:pan-y;}
   .total-chart svg{display:block; width:100%; height:72px;}
@@ -435,10 +442,13 @@
     margin-top:2px;
     transition:height .15s ease;
   }
+  .total-chart-dates span.first{ transform-origin:0 0; transform:rotate(30deg); }
+  .total-chart-dates i{position:absolute; top:-3px; height:14px; width:1px; background:#9CC4FF; transform:translateX(-.5px);}
   .total-chart-dates span{
     position:absolute;
     top:0;
-    transform:translateX(-50%);
+    transform-origin:100% 0;
+    transform:rotate(-30deg);line-height:12px;height:12px;border-bottom:1px solid #9CC4FF;
     font-size:9.5px;
     font-weight:700;
     color:#8A8A8E;
@@ -1051,6 +1061,10 @@
       </div>
       <span class="total-label" data-i18n="total_label">Total des crédits</span>
       <span class="total-filter-range" id="totalFilterRangeLabel" style="display:none;"></span>
+      <span class="total-chart-cursor-date" id="totalChartCursorDate" style="display:none;"></span>
+      <button type="button" class="total-chart-cursor-reset" style="display:none;" id="totalChartCursorReset" aria-label="Aujourd'hui" title="Aujourd'hui">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="4.5" width="18" height="16" rx="3"></rect><path d="M3 9.5h18"></path><path d="M8 2.5v4M16 2.5v4"></path><circle cx="12" cy="15" r="1.8" fill="currentColor" stroke="none"></circle></svg>
+      </button>
       <button type="button" class="total-filter-btn" id="totalFilterBtn" aria-label="Filtrer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </button>
@@ -1060,10 +1074,6 @@
     </div>
     <div class="total-chart" id="totalChart"></div>
     <div class="total-chart-dates" id="totalChartDates"></div>
-    <div class="total-chart-cursor-row" id="totalChartCursorRow" style="visibility:hidden;">
-      <span class="total-chart-cursor-date" id="totalChartCursorDate"></span>
-      <button type="button" class="total-chart-cursor-reset" id="totalChartCursorReset" data-i18n="total_cursor_reset">Aujourd'hui</button>
-    </div>
   </div>
 
   <div class="cards-grid" id="cardsGrid"></div>
@@ -1191,7 +1201,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.23</span>
+    <span class="app-version">v1.31</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1433,7 +1443,7 @@
       total_filter_archived: 'Inclure les archivés',
       total_filter_reset: 'Réinitialiser',
       total_filter_apply: 'Appliquer',
-      total_cursor_reset: 'Revenir à aujourd\'hui',
+      total_cursor_reset: 'Aujourd\'hui',
       total_filter_err_order: 'La date "Au" doit être après la date "Du".',
       total_filter_err_date: 'Année invalide (AAAA).',
       action_edit: 'Modifier',
@@ -1515,7 +1525,7 @@
       total_filter_archived: 'Include archived',
       total_filter_reset: 'Reset',
       total_filter_apply: 'Apply',
-      total_cursor_reset: 'Back to today',
+      total_cursor_reset: 'Today',
       total_filter_err_order: 'The "To" date must be after the "From" date.',
       total_filter_err_date: 'Invalid year (YYYY).',
       action_edit: 'Edit',
@@ -2839,16 +2849,18 @@
   }
 
   // ---- Curseur interactif sur la courbe du bloc total ----
-  const totalChartCursorRow = document.getElementById('totalChartCursorRow');
+  const totalChartCursorRow = {style:{}};
   const totalChartCursorDate = document.getElementById('totalChartCursorDate');
   const totalChartCursorReset = document.getElementById('totalChartCursorReset');
 
   function updateTotalChartCursorLabel(){
     if(totalChartSelectedMs === null){
-      totalChartCursorRow.style.visibility = 'hidden';
+      totalChartCursorDate.style.display = 'none';
+      totalChartCursorReset.style.display = 'none'; document.getElementById('totalFilterBtn').style.marginLeft = '';
       return;
     }
-    totalChartCursorRow.style.visibility = 'visible';
+    totalChartCursorDate.style.display = '';
+    totalChartCursorReset.style.display = ''; document.getElementById('totalFilterBtn').style.marginLeft = '0';
     totalChartCursorDate.textContent = formatFRDate(new Date(totalChartSelectedMs));
   }
   totalChartCursorReset.addEventListener('click', () => {
@@ -2984,21 +2996,12 @@
 
       // Si deux dates sont trop proches pour tenir côte à côte, on les répartit
       // sur des lignes alternées plutôt que de les laisser se chevaucher.
-      const MIN_GAP_PCT = 11;
-      const rowLastPct = [-Infinity, -Infinity, -Infinity];
-      const placed = markers.map(ms => {
-        const pct = Math.min(100, Math.max(0, ((ms - minStart) / span) * 100));
-        let row = rowLastPct.length - 1;
-        for(let r = 0; r < rowLastPct.length; r++){
-          if(pct - rowLastPct[r] >= MIN_GAP_PCT){ row = r; break; }
-        }
-        rowLastPct[row] = pct;
-        return {ms, pct, row};
-      });
-      const rowCount = Math.max(1, ...placed.map(p => p.row + 1));
-      totalChartDatesEl.style.height = (rowCount * 13 + 1) + 'px';
-      totalChartDatesEl.innerHTML = placed.map(p =>
-        '<span style="left:' + p.pct.toFixed(2) + '%; top:' + (p.row * 13) + 'px;">' + formatShortDate(p.ms) + '</span>'
+      // Dates inclinées à 45° : plus de chevauchement, une seule ligne suffit.
+      const placed = markers.map(ms => ({ms, pct: Math.min(100, Math.max(0, ((ms - minStart) / span) * 100))}));
+      totalChartDatesEl.style.height = '34px';
+      totalChartDatesEl.innerHTML = placed.map(p => p.pct < 12
+        ? '<i style="left:' + p.pct.toFixed(2) + '%;"></i><span class="first" style="left:calc(' + p.pct.toFixed(2) + '% + 6px);">' + formatShortDate(p.ms) + '</span>'
+        : '<i style="left:' + p.pct.toFixed(2) + '%;"></i><span style="right:calc(' + (100 - p.pct).toFixed(2) + '% + 6px);">' + formatShortDate(p.ms) + '</span>'
       ).join('');
     } else {
       totalChartDatesEl.innerHTML = '';
