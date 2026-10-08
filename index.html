@@ -481,6 +481,30 @@
   }
   .total-scroll:active .total-scroll-thumb{background:#007AFF;}
 
+  /* ---- Courbe individuelle d'un crédit ---- */
+  .credit-chart-row{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:2px;}
+  .credit-chart-btn{
+    flex-shrink:0; width:30px; height:30px; margin-bottom:-4px; border:none; border-radius:9px; padding:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    background:rgba(255,255,255,.2); color:inherit;
+  }
+  .credit-chart-btn.active{background:#007AFF; color:#fff;}
+  #app.style-ios .credit-chart-btn{background:#E9EEF7; color:#007AFF;}
+  #app.style-ios .credit-chart-btn.active{background:#007AFF; color:#fff;}
+  .credit-chart-panel{margin-top:10px; color:inherit;}
+  #app.style-ios .credit-chart-panel{color:var(--card-color, #007AFF);}
+  .cc-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-variant-numeric:tabular-nums;}
+  .cc-date{font-size:11.5px; font-weight:700; opacity:.9;}
+  .cc-amount{font-size:15px; font-weight:800;}
+  .cc-chart{margin-top:6px; touch-action:pan-y;}
+  .cc-chart svg{display:block; width:100%; height:72px;}
+  .cc-dates{position:relative; height:11px; margin-top:-8px; touch-action:pan-y; cursor:ew-resize;}
+  .cc-dates span{position:absolute; top:0; line-height:11px; font-size:9.5px; font-weight:700; opacity:.7; white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .cc-scroll{position:relative; height:30px; margin-top:2px; margin-bottom:-12px; touch-action:pan-y; cursor:ew-resize;}
+  .cc-scroll::before{content:''; position:absolute; left:0; right:0; top:5px; height:4px; border-radius:2px; background:currentColor; opacity:.15;}
+  .cc-thumb{position:absolute; top:3px; height:8px; width:34px; border-radius:4px; background:currentColor; opacity:.45; transform:translateX(-50%);}
+  .cc-today{position:absolute; top:4px; width:2px; height:6px; margin-left:-1px; border-radius:1px; background:#34C759; opacity:0; transition:opacity .2s ease;}
+
   /* ---- Cards ---- */
   .cards-grid{
     display:flex;
@@ -591,7 +615,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-bottom:18px;
+    margin-bottom:10px;
   }
   .settings-title{
     font-size:17px;
@@ -609,7 +633,9 @@
     font-size:14px;
     cursor:pointer;
   }
-  .settings-row{margin-bottom:16px;}
+  .settings-row{margin-bottom:10px;}
+  .settings-row .segmented{margin-bottom:0;}
+  .settings-row .segmented button{padding-top:6px; padding-bottom:6px;}
   .year-wheels-row{
     display:flex;
     gap:14px;
@@ -662,7 +688,7 @@
     font-size:12.5px;
     font-weight:600;
     color:var(--text-muted);
-    margin-bottom:8px;
+    margin-bottom:4px;
   }
   #langSegmented, #styleSegmented{width:100%;}
   #langSegmented button, #styleSegmented button{
@@ -673,7 +699,7 @@
     background:transparent;
     border:none;
     color:var(--text-muted);
-    padding:10px 10px;
+    padding:7px 10px;
     border-radius:11px;
     cursor:pointer;
   }
@@ -681,6 +707,23 @@
     background:var(--accent);
     color:#fff;
   }
+
+  /* Interrupteur type iOS (capsule verte, curseur large façon iOS 26) */
+  .ios-switch-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0 2px;}
+  .ios-switch-label{font-size:15px; font-weight:600; color:var(--text);}
+  .ios-switch{
+    position:relative; flex-shrink:0; width:56px; height:32px; padding:0; border:none; cursor:pointer;
+    border-radius:16px; background:#E9E9EB; transition:background .25s ease;
+  }
+  .ios-switch.on{background:#34C759;}
+  .ios-knob{
+    position:absolute; top:2px; left:2px; width:38px; height:28px; border-radius:14px;
+    background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.22), 0 0 0 .5px rgba(0,0,0,.06);
+    transition:transform .28s cubic-bezier(.3,1.4,.5,1);
+  }
+  .ios-switch.on .ios-knob{transform:translateX(16px);}
+  .ios-switch:active .ios-knob{width:42px;}
+  .ios-switch.on:active .ios-knob{transform:translateX(12px);}
   .sort-options{display:flex; flex-direction:column;}
   .sort-option{
     display:flex;
@@ -690,7 +733,7 @@
     background:transparent;
     border:none;
     border-top:1px solid var(--border);
-    padding:14px 2px;
+    padding:10px 2px;
     font-family:inherit;
     font-size:15px;
     font-weight:600;
@@ -1224,7 +1267,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.44</span>
+    <span class="app-version">v1.50</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1260,12 +1303,9 @@
         </div>
       </div>
 
-      <div class="settings-row">
-        <label class="settings-label" data-i18n="settings_total">Bloc total des crédits</label>
-        <div class="segmented" id="totalSegmented">
-          <button type="button" data-total="off" data-i18n="settings_total_off">Désactivé</button>
-          <button type="button" data-total="on" data-i18n="settings_total_on">Activé</button>
-        </div>
+      <div class="settings-row ios-switch-row" id="totalSegmented">
+        <span class="ios-switch-label" data-i18n="settings_total">Afficher le bloc total</span>
+        <button type="button" class="ios-switch" id="totalSwitch" role="switch" aria-checked="false" aria-label="Afficher le bloc total"><span class="ios-knob"></span></button>
       </div>
     </div>
   </div>
@@ -1398,7 +1438,7 @@
       settings_style_color: 'Coloré',
       settings_style_ios: 'Clair',
       settings_decimals: 'Décimales affichées',
-      settings_total: 'Bloc total des crédits',
+      settings_total: 'Afficher le bloc total',
       settings_total_off: 'Désactivé',
       settings_total_on: 'Activé',
       total_label: 'Total des crédits',
@@ -1467,6 +1507,7 @@
       total_filter_reset: 'Réinitialiser',
       total_filter_apply: 'Appliquer',
       total_cursor_reset: 'Aujourd\'hui',
+      credit_chart_today: 'Aujourd\'hui',
       total_filter_err_order: 'La date "Au" doit être après la date "Du".',
       total_filter_err_date: 'Année invalide (AAAA).',
       action_edit: 'Modifier',
@@ -1480,7 +1521,7 @@
       settings_style_color: 'Color',
       settings_style_ios: 'Light',
       settings_decimals: 'Decimal places',
-      settings_total: 'Loans total block',
+      settings_total: 'Show total block',
       settings_total_off: 'Off',
       settings_total_on: 'On',
       total_label: 'Loans total',
@@ -1549,6 +1590,7 @@
       total_filter_reset: 'Reset',
       total_filter_apply: 'Apply',
       total_cursor_reset: 'Today',
+      credit_chart_today: 'Today',
       total_filter_err_order: 'The "To" date must be after the "From" date.',
       total_filter_err_date: 'Invalid year (YYYY).',
       action_edit: 'Edit',
@@ -3157,6 +3199,149 @@
     updateTotalCard();
   }
 
+  // ---- Courbe individuelle d'un crédit (bouton graphique en bas à droite du bloc) ----
+  const openCreditCharts = new Set();
+
+  function creditChartRange(item){
+    const minStart = new Date(item.initialDate || item.startDate).getTime();
+    const maxEnd = new Date(item.endDate).getTime();
+    return {minStart, maxEnd};
+  }
+
+  function initCreditChartUI(cardEl, item){
+    const btn = cardEl.querySelector('[data-chart-btn]');
+    const panel = cardEl.querySelector('[data-chart-panel]');
+    const row = cardEl.querySelector('.credit-chart-row');
+    if(!btn || !panel) return;
+
+    // Les gestes dans cette zone ne doivent pas déclencher l'appui long / le glisser de la vignette
+    [row, panel].forEach(el => {
+      ['touchstart','touchmove','touchend','touchcancel','mousedown','mousemove','mouseup','click'].forEach(ev => {
+        el.addEventListener(ev, e => e.stopPropagation(), ev === 'touchmove' ? {passive:true} : false);
+      });
+    });
+
+    let sel = null, range = null, dragging = false, resetTimer = null, raf = null;
+    const W = 300, H = 76, padL = 4, padR = 4, padT = 16, padB = 16;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    let minVal = 0, valSpan = 1, minStart = 0, maxEnd = 1;
+    let headDate, chartEl, datesEl, thumbEl, todayEl, scrollEl;
+
+    const valueAt = ms => remainingWithHistory(item, ms);
+    const xFor = ms => padL + ((ms - minStart) / (maxEnd - minStart)) * plotW;
+    const yFor = v => padT + (1 - (v - minVal) / valSpan) * plotH;
+    const nowClamped = () => Math.min(maxEnd, Math.max(minStart, Date.now()));
+
+    function build(){
+      ({minStart, maxEnd} = creditChartRange(item));
+      if(!(maxEnd > minStart)){ panel.innerHTML = ''; return; }
+      const N = 48, pts = [];
+      for(let i = 0; i <= N; i++){ const ms = minStart + (maxEnd - minStart) * i / N; pts.push({ms, v: valueAt(ms)}); }
+      let mx = Math.max(...pts.map(p => p.v), 1), mn = Math.min(...pts.map(p => p.v));
+      if(mx - mn < 1){ mn = mx - 1; }
+      const pad = (mx - mn) * 0.06; minVal = Math.max(0, mn - pad); valSpan = (mx + pad) - minVal;
+      const path = pts.map((p, i) => (i ? 'L' : 'M') + xFor(p.ms).toFixed(1) + ' ' + yFor(p.v).toFixed(1)).join(' ');
+      const base = padT + plotH;
+      const ticks = [new Date(item.startDate).getTime(), maxEnd, minStart].filter((v, i, a) => a.indexOf(v) === i)
+        .map(ms => '<line x1="' + xFor(ms).toFixed(1) + '" y1="' + (base - 4) + '" x2="' + xFor(ms).toFixed(1) + '" y2="' + (base + 4) + '" stroke="currentColor" stroke-opacity="0.55" stroke-width="1.5"></line>').join('');
+      const now = nowClamped(), gx = xFor(now).toFixed(1), gy = yFor(valueAt(now)).toFixed(1);
+      const svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+        '<line x1="' + padL + '" y1="' + base + '" x2="' + (padL + plotW) + '" y2="' + base + '" stroke="currentColor" stroke-opacity="0.3"></line>' +
+        '<text x="' + padL + '" y="10" font-size="8" fill="currentColor" fill-opacity="0.7">' + (mx / 1000).toFixed(0) + ' K€</text>' +
+        '<path d="' + path + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>' + ticks +
+        '<g class="cc-ghost" opacity="0" style="transition:opacity .2s ease;"><line x1="' + gx + '" y1="' + padT + '" x2="' + gx + '" y2="' + base + '" stroke="#34C759" stroke-opacity="0.45"></line><circle cx="' + gx + '" cy="' + gy + '" r="2.6" fill="none" stroke="#34C759" stroke-width="1.5"></circle></g>' +
+        '<line class="cc-mline" y1="' + padT + '" y2="' + base + '" stroke="currentColor" stroke-opacity="0.35" stroke-dasharray="2,2"></line>' +
+        '<circle class="cc-halo" r="3.2" fill="currentColor" fill-opacity="0.35"><animate attributeName="r" values="3.2;8;3.2" dur="2.2s" repeatCount="indefinite"></animate><animate attributeName="fill-opacity" values="0.35;0;0.35" dur="2.2s" repeatCount="indefinite"></animate></circle>' +
+        '<circle class="cc-dot" r="3.2" fill="currentColor"></circle></svg>';
+      panel.innerHTML = '<div class="cc-head"><span class="cc-date"></span></div>' +
+        '<div class="cc-chart">' + svg + '</div><div class="cc-dates"></div>' +
+        '<div class="cc-scroll"><div class="cc-today"></div><div class="cc-thumb"></div></div>';
+      headDate = panel.querySelector('.cc-date');
+      chartEl = panel.querySelector('.cc-chart'); datesEl = panel.querySelector('.cc-dates');
+      thumbEl = panel.querySelector('.cc-thumb'); todayEl = panel.querySelector('.cc-today'); scrollEl = panel.querySelector('.cc-scroll');
+      // dates : une seule ligne, on masque celles qui se chevauchent
+      const wPx = panel.clientWidth || 280;
+      const cand = [minStart, new Date(item.startDate).getTime(), maxEnd].filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b);
+      const kept = [];
+      [cand[0], cand[cand.length - 1], ...cand.slice(1, -1)].forEach(ms => {
+        const xp = (xFor(ms) / W) * 100, x = xp / 100 * wPx, label = formatShortDate(ms), w = label.length * 5.3 + 4;
+        let align = 'c', lo = x - w / 2, hi = x + w / 2;
+        if(lo < 0){ align = 'l'; lo = x - 2; hi = lo + w; } else if(hi > wPx){ align = 'r'; hi = x + 2; lo = hi - w; }
+        if(!kept.some(k => lo < k.hi + 3 && hi > k.lo - 3)) kept.push({xp, label, align, lo, hi});
+      });
+      datesEl.innerHTML = kept.map(k => '<span style="left:' + k.xp.toFixed(2) + '%; transform:translateX(' + (k.align === 'l' ? '0' : k.align === 'r' ? '-100%' : '-50%') + ');">' + k.label + '</span>').join('');
+      range = {minStart, maxEnd};
+      bindDrag(chartEl); bindDrag(datesEl); bindDrag(scrollEl);
+      setCursor(sel === null ? null : sel);
+    }
+
+    function setCursor(ms){
+      if(!range) return;
+      const shown = ms === null ? nowClamped() : ms;
+      const x = xFor(shown).toFixed(1), y = yFor(valueAt(shown)).toFixed(1);
+      const ml = panel.querySelector('.cc-mline'), dot = panel.querySelector('.cc-dot'), halo = panel.querySelector('.cc-halo'), ghost = panel.querySelector('.cc-ghost');
+      ml.setAttribute('x1', x); ml.setAttribute('x2', x);
+      [dot, halo].forEach(c => { c.setAttribute('cx', x); c.setAttribute('cy', y); });
+      ghost.setAttribute('opacity', ms === null ? '0' : '1');
+      todayEl.style.left = (xFor(nowClamped()) / W * 100).toFixed(2) + '%';
+      todayEl.style.opacity = ms === null ? '0' : '1';
+      const half = 17 / (scrollEl.clientWidth || 280) * 100;
+      thumbEl.style.left = Math.min(100 - half, Math.max(half, xFor(shown) / W * 100)).toFixed(2) + '%';
+      headDate.textContent = ms === null ? t('credit_chart_today') : formatFRDate(new Date(ms));
+      // Le montant noir en haut du bloc suit le curseur ; sans curseur, tick() reprend la main (direct)
+      const moneyEl = cardEl.querySelector('[data-money]');
+      if(ms === null){ delete cardEl.dataset.chartSel; }
+      else { cardEl.dataset.chartSel = '1'; if(moneyEl) moneyEl.textContent = formatMoney(valueAt(ms)) + ' €'; }
+    }
+
+    function xToMs(clientX){
+      const svg = chartEl.querySelector('svg'), r = svg.getBoundingClientRect();
+      if(!r.width) return null;
+      const frac = ((clientX - r.left) / r.width * W - padL) / plotW;
+      return minStart + Math.min(1, Math.max(0, frac)) * (maxEnd - minStart);
+    }
+    function dragTo(clientX){ const ms = xToMs(clientX); if(ms === null) return; sel = ms; setCursor(ms); }
+
+    function animateBack(){
+      cancelAnimationFrame(raf);
+      if(sel === null) return;
+      const from = sel, to = nowClamped(), t0 = performance.now(), DUR = 800;
+      (function step(now){
+        const k = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - k, 3);
+        sel = from + (to - from) * e; setCursor(sel);
+        if(k < 1) raf = requestAnimationFrame(step); else { sel = null; setCursor(null); }
+      })(t0);
+    }
+    function scheduleBack(){ clearTimeout(resetTimer); resetTimer = setTimeout(() => { if(!dragging) animateBack(); }, 2000); }
+
+    function bindDrag(el){
+      let sx = 0, sy = 0, active = false, moved = false, pid = null;
+      el.addEventListener('pointerdown', e => {
+        clearTimeout(resetTimer); cancelAnimationFrame(raf);
+        sx = e.clientX; sy = e.clientY; active = true; moved = false; pid = e.pointerId; dragging = true;
+        if(e.pointerType === 'mouse'){ try{ el.setPointerCapture(pid); }catch(_){} moved = true; dragTo(e.clientX); }
+      });
+      el.addEventListener('pointermove', e => {
+        if(!active) return;
+        if(!moved){
+          const dx = Math.abs(e.clientX - sx), dy = Math.abs(e.clientY - sy);
+          if(dx > 6 && dx > dy){ moved = true; try{ el.setPointerCapture(pid); }catch(_){} } else return;
+        }
+        dragTo(e.clientX);
+      });
+      el.addEventListener('pointerup', e => {
+        if(active && !moved && Math.abs(e.clientX - sx) < 6 && Math.abs(e.clientY - sy) < 6) dragTo(e.clientX);
+        active = false; dragging = false; scheduleBack();
+      });
+      el.addEventListener('pointercancel', () => { active = false; dragging = false; scheduleBack(); });
+    }
+
+    function open(){ panel.style.display = ''; btn.classList.add('active'); openCreditCharts.add(item.id); build(); }
+    function close(){ panel.style.display = 'none'; btn.classList.remove('active'); openCreditCharts.delete(item.id); clearTimeout(resetTimer); cancelAnimationFrame(raf); sel = null; delete cardEl.dataset.chartSel; }
+    btn.addEventListener('click', () => { panel.style.display === 'none' ? open() : close(); });
+    if(openCreditCharts.has(item.id)) open();
+  }
+
   // ---- Render ----
   function render(){
     recomputeCreditItemsList();
@@ -3244,7 +3429,13 @@
             <div class="repaid-today" data-repaid-today></div>
             <div class="repaid-month" data-repaid-month></div>
             <div class="interest-month" data-interest-month></div>
-            <div class="money-caption" data-caption>${t('credit_disclaimer')}</div>
+            <div class="credit-chart-row">
+              <div class="money-caption" data-caption>${t('credit_disclaimer')}</div>
+              <button type="button" class="credit-chart-btn" data-chart-btn aria-label="Courbe du crédit" title="Courbe du crédit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+              </button>
+            </div>
+            <div class="credit-chart-panel" data-chart-panel style="display:none;"></div>
           </div>
         </div>`;
       }
@@ -3255,6 +3446,7 @@
       const item = items.find(i => i.id === cardEl.getAttribute('data-id'));
       if(!item) return;
       attachLongPress(cardEl, item);
+      if(item.type === 'credit') initCreditChartUI(cardEl, item);
       const numberEl = cardEl.querySelector('[data-number]');
       numberEl.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3394,19 +3586,19 @@
         progressEl.style.width = (state.progress * 100) + '%';
         progressPercentEl.textContent = (state.progress * 100).toFixed(1) + '%';
         if(state.notStarted){
-          moneyEl.textContent = formatMoney(item.amount) + ' €';
+          if(!target.card.dataset.chartSel) moneyEl.textContent = formatMoney(item.amount) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
           interestMonthEl.textContent = '';
         } else if(state.finished){
-          moneyEl.textContent = formatMoney(0) + ' €';
+          if(!target.card.dataset.chartSel) moneyEl.textContent = formatMoney(0) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           repaidTodayEl.textContent = '';
           repaidMonthEl.textContent = '';
           interestMonthEl.textContent = '';
         } else {
-          moneyEl.textContent = formatMoney(state.remaining) + ' €';
+          if(!target.card.dataset.chartSel) moneyEl.textContent = formatMoney(state.remaining) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
           const startOfToday = new Date(now);
           startOfToday.setHours(0, 0, 0, 0);
@@ -3454,9 +3646,9 @@
     decimalsSegmented.querySelectorAll('button').forEach(btn => {
       btn.classList.toggle('active', parseInt(btn.getAttribute('data-decimals'), 10) === settings.decimals);
     });
-    totalSegmented.querySelectorAll('button').forEach(btn => {
-      btn.classList.toggle('active', (btn.getAttribute('data-total') === 'on') === settings.showTotal);
-    });
+    const sw = document.getElementById('totalSwitch');
+    sw.classList.toggle('on', settings.showTotal);
+    sw.setAttribute('aria-checked', settings.showTotal ? 'true' : 'false');
   }
 
   settingsBtn.addEventListener('click', () => {
@@ -3493,14 +3685,12 @@
       tick();
     });
   });
-  totalSegmented.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      settings.showTotal = btn.getAttribute('data-total') === 'on';
-      settings.totalPrefSet = true;
-      saveSettings();
-      refreshSettingsUI();
-      render();
-    });
+  document.getElementById('totalSwitch').addEventListener('click', () => {
+    settings.showTotal = !settings.showTotal;
+    settings.totalPrefSet = true;
+    saveSettings();
+    refreshSettingsUI();
+    render();
   });
 
   // ---- Menu de tri ----
