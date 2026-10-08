@@ -109,6 +109,7 @@
     cursor:pointer;
   }
   .settings-btn:hover{background:var(--border);}
+  .settings-btn:disabled{opacity:.35; cursor:default; pointer-events:none;}
   .settings-btn.empty-hint{
     animation:emptyHintPulse 1.5s ease-in-out infinite;
   }
@@ -1156,8 +1157,8 @@
   <div class="confirm-backdrop" id="formBackdrop" style="display:none;">
   <div class="form-panel" id="formPanel">
     <div class="segmented">
-      <button type="button" id="tabSimple" class="active" data-i18n="tab_simple">Échéance</button>
       <button type="button" id="tabCredit" data-i18n="tab_credit">Crédit</button>
+      <button type="button" id="tabSimple" class="active" data-i18n="tab_simple">Échéance</button>
     </div>
 
     <form id="addForm">
@@ -1267,7 +1268,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.50</span>
+    <span class="app-version">v1.53</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1711,7 +1712,7 @@
     unlockBodyScroll();
     form.reset();
     document.getElementById('initialDateField').style.display = 'none';
-    setType('simple');
+    setType('credit');
     formError.style.display = 'none';
     if(!editingId){
       selectedColorIndex = (selectedColorIndex + 1) % PALETTE.length;
@@ -1759,7 +1760,7 @@
   });
   cancelFormBtn.addEventListener('click', closeForm);
 
-  let currentType = 'simple';
+  let currentType = 'credit';
   tabSimple.addEventListener('click', () => setType('simple'));
   tabCredit.addEventListener('click', () => setType('credit'));
 
@@ -3348,6 +3349,7 @@
     const activeItems = items.filter(i => !i.archived);
     toggleFormBtn.classList.toggle('empty-hint', activeItems.length === 0);
     emptyArrow.style.display = activeItems.length === 0 ? 'block' : 'none';
+    document.getElementById('sortBtn').disabled = items.length === 0;
     renderTotalCard();
     renderArchiveBanner();
 
@@ -3732,7 +3734,7 @@
 
   loadSettings();
   applyStyle();
-  setType('simple');
+  setType('credit');
   applyTranslations();
   loadItems();
 
