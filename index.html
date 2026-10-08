@@ -503,7 +503,9 @@
   .credit-chart-panel{margin-top:10px; color:inherit;}
   #app.style-ios .credit-chart-panel{color:var(--card-color, #007AFF);}
   .cc-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-variant-numeric:tabular-nums;}
-  .cc-date{font-size:11.5px; font-weight:700; opacity:.9;}
+  .cc-date{font-size:14px; font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; margin-left:auto;}
+  #app.style-ios .cc-date{color:var(--card-color, #007AFF);}
+  .credit-chart-row .money-caption{min-width:0;}
   .cc-amount{font-size:15px; font-weight:800;}
   .cc-chart{margin-top:6px; touch-action:pan-y;}
   .cc-chart svg{display:block; width:100%; height:72px;}
@@ -1276,7 +1278,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.59</span>
+    <span class="app-version">v1.60</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -3281,10 +3283,9 @@
         '<line class="cc-mline" y1="' + padT + '" y2="' + base + '" stroke="currentColor" stroke-opacity="0.35" stroke-dasharray="2,2"></line>' +
         '<circle class="cc-halo" r="3.2" fill="currentColor" fill-opacity="0.35"><animate attributeName="r" values="3.2;8;3.2" dur="2.2s" repeatCount="indefinite"></animate><animate attributeName="fill-opacity" values="0.35;0;0.35" dur="2.2s" repeatCount="indefinite"></animate></circle>' +
         '<circle class="cc-dot" r="3.2" fill="currentColor"></circle></svg>';
-      panel.innerHTML = '<div class="cc-head"><span class="cc-date"></span></div>' +
-        '<div class="cc-chart">' + svg + '</div><div class="cc-dates"></div>' +
+      panel.innerHTML = '<div class="cc-chart">' + svg + '</div><div class="cc-dates"></div>' +
         '<div class="cc-scroll"><div class="cc-today"></div><div class="cc-thumb"></div></div>';
-      headDate = panel.querySelector('.cc-date');
+      headDate = cardEl.querySelector('[data-chart-date]');
       chartEl = panel.querySelector('.cc-chart'); datesEl = panel.querySelector('.cc-dates');
       thumbEl = panel.querySelector('.cc-thumb'); todayEl = panel.querySelector('.cc-today'); scrollEl = panel.querySelector('.cc-scroll');
       // dates : une seule ligne, on masque celles qui se chevauchent
@@ -3364,8 +3365,8 @@
       el.addEventListener('pointercancel', () => { active = false; dragging = false; scheduleBack(); });
     }
 
-    function open(){ panel.style.display = ''; btn.classList.add('active'); openCreditCharts.add(item.id); build(); }
-    function close(){ panel.style.display = 'none'; btn.classList.remove('active'); openCreditCharts.delete(item.id); clearTimeout(resetTimer); cancelAnimationFrame(raf); sel = null; delete cardEl.dataset.chartSel; }
+    function open(){ panel.style.display = ''; cardEl.querySelector('[data-chart-date]').style.display = ''; btn.classList.add('active'); openCreditCharts.add(item.id); build(); }
+    function close(){ panel.style.display = 'none'; cardEl.querySelector('[data-chart-date]').style.display = 'none'; btn.classList.remove('active'); openCreditCharts.delete(item.id); clearTimeout(resetTimer); cancelAnimationFrame(raf); sel = null; delete cardEl.dataset.chartSel; }
     btn.addEventListener('click', () => { panel.style.display === 'none' ? open() : close(); });
     if(openCreditCharts.has(item.id)) open();
   }
@@ -3460,6 +3461,7 @@
             <div class="interest-month" data-interest-month></div>
             <div class="credit-chart-row">
               <div class="money-caption" data-caption>${t('credit_disclaimer')}</div>
+              <span class="cc-date" data-chart-date style="display:none;"></span>
               <button type="button" class="credit-chart-btn" data-chart-btn aria-label="Courbe du crédit" title="Courbe du crédit">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
               </button>
