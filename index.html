@@ -179,10 +179,11 @@
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:12px;
-    margin-bottom:12px;
+    margin-bottom:16px;
+    align-items:end;
   }
   .field-row.single{grid-template-columns:1fr;}
-  .field{display:flex;flex-direction:column;gap:6px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
   .field label{
     font-size:12.5px;
     font-weight:600;
@@ -248,14 +249,18 @@
   }
   .credit-fields{display:none;}
   .credit-fields.visible{display:contents;}
+  .credit-fields > .field{margin-bottom:16px;}
   .color-swatches{
     display:flex;
-    gap:10px;
-    flex-wrap:wrap;
+    gap:6px;
+    flex-wrap:nowrap;
+    justify-content:space-between;
+    padding:0 4px;
   }
   .color-swatch{
     width:36px;
     height:36px;
+    flex-shrink:0;
     border-radius:50%;
     border:none;
     cursor:pointer;
@@ -281,6 +286,9 @@
     gap:8px;
     flex-wrap:wrap;
   }
+  .icon-swatches.single-line{flex-wrap:nowrap; justify-content:space-between;}
+  .icon-swatches.single-line{gap:6px;}
+  .icon-swatches.single-line .icon-swatch{flex:1; max-width:62px; min-width:0; width:auto;}
   .icon-swatch{
     width:42px;
     height:42px;
@@ -1212,7 +1220,7 @@
           <input type="number" id="amountInput" min="0" step="0.01" inputmode="decimal" placeholder="250000">
         </div>
         <div class="field">
-          <label for="initialAmountInput" data-i18n="label_initial_amount">Montant initial (€) — facultatif, si différent (renégociation)</label>
+          <label for="initialAmountInput" data-i18n="label_initial_amount">Montant initial (€) — si différent (renégociation)</label>
           <input type="number" id="initialAmountInput" min="0" step="0.01" inputmode="decimal" placeholder="Optionnel">
         </div>
         <div class="field" id="initialDateField" style="display:none;">
@@ -1268,7 +1276,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.53</span>
+    <span class="app-version">v1.58</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1458,7 +1466,7 @@
       label_end_date: 'Date de fin',
       label_end_time: 'Heure de fin',
       label_amount: 'Montant emprunté (€)',
-      label_initial_amount: 'Montant initial (€) — facultatif, si différent (renégociation)',
+      label_initial_amount: 'Montant initial (€) — si différent (renégociation)',
       label_initial_date: 'Date du montant initial',
       err_initial_date: 'Merci de saisir la date du montant initial (JJ/MM/AAAA).',
       err_initial_date_order: 'La date du montant initial doit être antérieure à la date de départ.',
@@ -1541,7 +1549,7 @@
       label_end_date: 'End date',
       label_end_time: 'End time',
       label_amount: 'Loan amount (€)',
-      label_initial_amount: 'Initial amount (€) — optional, if different (renegotiation)',
+      label_initial_amount: 'Initial amount (€) — if different (renegotiation)',
       label_initial_date: 'Initial amount date',
       err_initial_date: 'Please enter the initial amount date (DD/MM/YYYY).',
       err_initial_date_order: 'The initial amount date must be before the start date.',
@@ -1771,6 +1779,7 @@
     simpleFields.style.display = newType === 'simple' ? 'grid' : 'none';
     creditFields.classList.toggle('visible', newType === 'credit');
     formError.style.display = 'none';
+    renderIconSwatches();
     document.getElementById('titleInput').placeholder = t(newType === 'credit' ? 'placeholder_title_credit' : 'placeholder_title_simple');
   }
 
@@ -1781,7 +1790,8 @@
     {main:'#CBA05C', dark:'#AC8440'},
     {main:'#9683B5', dark:'#786998'},
     {main:'#C17F77', dark:'#A3635C'},
-    {main:'#6FA09B', dark:'#557F7B'}
+    {main:'#6FA09B', dark:'#557F7B'},
+    {main:'#B9779A', dark:'#9A5C7D'}
   ];
   // ---- Bibliothèque d'icônes au trait (remplace les emoji) ----
   const ICON_SVGS = {
@@ -1798,6 +1808,9 @@
     rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>',
     house: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>',
     building: '<path d="M6 22V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v18Z"></path><path d="M6 12H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2"></path><path d="M18 9h2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-2"></path><path d="M10 6h4M10 10h4M10 14h4M10 18h4"></path>',
+    car: '<path d="M5 17H3v-5l2-5a2 2 0 0 1 1.9-1.4h10.2A2 2 0 0 1 19 7l2 5v5h-2"></path><path d="M3 12h18"></path><circle cx="7.5" cy="17" r="2"></circle><circle cx="16.5" cy="17" r="2"></circle><path d="M9.5 17h5"></path>',
+    ring: '<circle cx="12" cy="15" r="6"></circle><path d="M9.5 4.5 8 7h8l-1.5-2.5z"></path><path d="M9.5 4.5 12 9l2.5-4.5"></path>',
+    card: '<rect x="2" y="5" width="20" height="14" rx="2.5"></rect><path d="M2 10h20"></path><path d="M6 15h4"></path>',
     housetree: '<path d="M3 9l6-5 6 5v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"></path><circle cx="19" cy="8" r="3"></circle><path d="M19 11v9"></path>',
     moneybag: '<path d="M7 8c0-2.5 2-5 5-5s5 2.5 5 5"></path><path d="M5 8h14l1 11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><line x1="12" y1="12" x2="12" y2="15"></line>',
     banknote: '<rect x="2" y="6" width="20" height="12" rx="2"></rect><text x="12" y="12.5" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="800" fill="currentColor" stroke="none">€</text>',
@@ -1815,7 +1828,7 @@
 
   const ICONS_SIMPLE = ['calendar','hourglass','pin','target','plane','party'];
   const ICONS_CREDIT = ['house','building','housetree'];
-  const ICONS_ALL = ['calendar','hourglass','alarm','target','pin','plane','party','graduation','baby','cake','rocket','house','building','housetree','moneybag','banknote','unlock','luggage'];
+  const ICONS_ALL = ['calendar','hourglass','alarm','target','pin','plane','party','graduation','baby','cake','rocket','house','building','housetree','moneybag','banknote','unlock','luggage','car','card','ring'];
 
   function hashStr(s){
     let h = 0;
@@ -1824,7 +1837,7 @@
   }
   function colorFor(item){
     if(typeof item.colorIndex === 'number' && PALETTE[item.colorIndex]) return PALETTE[item.colorIndex];
-    return PALETTE[hashStr(item.id) % PALETTE.length];
+    return PALETTE[hashStr(item.id) % 6]; // anciens comptes sans couleur : on garde la répartition d'origine
   }
   function iconFor(item){
     if(item.icon) return item.icon;
@@ -1832,10 +1845,24 @@
     return list[hashStr(item.id + 'icon') % list.length];
   }
 
+  // Crédit : 4 icônes sur une ligne (villa, voiture, appartement, crédit conso)
+  const ICONS_CREDIT_FORM = ['housetree','car','building','card','plane','ring'];
+  const ICON_LABELS = {housetree:'Villa', car:'Voiture', building:'Appartement', card:'Crédit conso', plane:'Voyage', ring:'Bague'};
+  function visibleIconIndexes(){
+    if(currentType !== 'credit') return ICONS_ALL.map((k, i) => i).filter(i => ICONS_ALL[i] !== 'car' && ICONS_ALL[i] !== 'card' && ICONS_ALL[i] !== 'ring');
+    const idx = ICONS_CREDIT_FORM.map(k => ICONS_ALL.indexOf(k));
+    // en modification, on garde l'icône déjà choisie même si elle n'est plus proposée
+    if(editingId && !idx.includes(selectedIconIndex)) idx.push(selectedIconIndex);
+    return idx;
+  }
+
   function renderIconSwatches(){
-    iconSwatchesEl.innerHTML = ICONS_ALL.map((key, i) =>
+    const visible = visibleIconIndexes();
+    if(!visible.includes(selectedIconIndex)) selectedIconIndex = visible[0];
+    iconSwatchesEl.classList.toggle('single-line', currentType === 'credit');
+    iconSwatchesEl.innerHTML = visible.map(i => [ICONS_ALL[i], i]).map(([key, i]) =>
       '<button type="button" class="icon-swatch' + (i === selectedIconIndex ? ' selected' : '') +
-      '" data-icon-index="' + i + '" aria-label="Icône ' + (i + 1) + '">' + renderIconMarkup(key, 20) + '</button>'
+      '" data-icon-index="' + i + '" aria-label="' + (ICON_LABELS[key] || ('Icône ' + (i + 1))) + '" title="' + (ICON_LABELS[key] || '') + '">' + renderIconMarkup(key, 20) + '</button>'
     ).join('');
     iconSwatchesEl.querySelectorAll('.icon-swatch').forEach(btn => {
       btn.addEventListener('click', () => {
