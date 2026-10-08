@@ -497,9 +497,9 @@
     display:flex; align-items:center; justify-content:center; cursor:pointer;
     background:rgba(255,255,255,.2); color:inherit;
   }
-  .credit-chart-btn.active{background:#007AFF; color:#fff;}
-  #app.style-ios .credit-chart-btn{background:#E9EEF7; color:#007AFF;}
-  #app.style-ios .credit-chart-btn.active{background:#007AFF; color:#fff;}
+  .credit-chart-btn.active{background:rgba(255,255,255,.4); color:inherit;}
+  #app.style-ios .credit-chart-btn{background:color-mix(in srgb, var(--card-color, #007AFF) 18%, #fff); color:var(--card-color, #007AFF);}
+  #app.style-ios .credit-chart-btn.active{background:var(--card-color, #007AFF); color:#fff;}
   .credit-chart-panel{margin-top:10px; color:inherit;}
   #app.style-ios .credit-chart-panel{color:var(--card-color, #007AFF);}
   .cc-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-variant-numeric:tabular-nums;}
@@ -1278,7 +1278,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.60</span>
+    <span class="app-version">v1.61</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
