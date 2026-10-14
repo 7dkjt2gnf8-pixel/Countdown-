@@ -371,6 +371,7 @@
     text-transform:uppercase;
     letter-spacing:.04em;
   }
+  .range-arrow{margin:0 5px; flex-shrink:0;}
   .total-filter-range{
     font-size:11.5px;
     font-weight:700;
@@ -379,6 +380,7 @@
     padding:3px 8px;
     border-radius:20px;
     white-space:nowrap;
+    align-items:center;
   }
   .total-filter-btn{
     margin-left:auto;
@@ -1278,7 +1280,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.64</span>
+    <span class="app-version">v1.66</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -2588,8 +2590,9 @@
       totalFilterRangeLabel.style.display = 'none';
       return;
     }
-    totalFilterRangeLabel.style.display = 'inline-block';
-    totalFilterRangeLabel.textContent = (fromYear || '…') + ' ➡️ ' + (toYear || '…');
+    totalFilterRangeLabel.style.display = 'inline-flex';
+    const arrowSvg = '<svg class="range-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"></path><path d="m13 6 6 6-6 6"></path></svg>';
+    totalFilterRangeLabel.innerHTML = (fromYear || '…') + arrowSvg + (toYear || '…');
   }
 
   // ---- Filtre du bloc total (intervalle de dates + inclusion des archivés) ----
