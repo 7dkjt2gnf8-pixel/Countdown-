@@ -1278,7 +1278,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.63</span>
+    <span class="app-version">v1.64</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1501,6 +1501,7 @@
       monthly_incl_insurance: 'dont',
       monthly_insurance_suffix: 'd\'assurance',
       repaid_today: 'Remboursé aujourd\'hui',
+      repaid_day: 'Remboursé ce jour',
       repaid_month: 'Remboursé ce mois',
       interest_month: 'Intérêts ce mois',
       confirm_delete: 'Supprimer',
@@ -1584,6 +1585,7 @@
       monthly_incl_insurance: 'incl.',
       monthly_insurance_suffix: 'insurance',
       repaid_today: 'Repaid today',
+      repaid_day: 'Repaid that day',
       repaid_month: 'Repaid this month',
       interest_month: 'Interest this month',
       confirm_delete: 'Delete',
@@ -3335,7 +3337,7 @@
       // Le montant noir en haut du bloc suit le curseur ; sans curseur, tick() reprend la main (direct)
       const moneyEl = cardEl.querySelector('[data-money]');
       if(ms === null){ delete cardEl.dataset.chartSel; }
-      else { cardEl.dataset.chartSel = '1'; if(moneyEl) moneyEl.textContent = formatMoney(valueAt(ms)) + ' €'; }
+      else { cardEl.dataset.chartSel = '1'; cardEl.dataset.chartRef = String(ms); if(moneyEl) moneyEl.textContent = formatMoney(valueAt(ms)) + ' €'; }
     }
 
     function xToMs(clientX){
@@ -3621,7 +3623,9 @@
           }
         }
 
-        const state = creditState(item, now);
+        // Curseur de la courbe du crédit actif : les chiffres se calculent à la date choisie
+        const refMs = target.card.dataset.chartSel ? parseFloat(target.card.dataset.chartRef) : now;
+        const state = creditState(item, refMs);
         const progressEl = target.progressEl;
         const progressPercentEl = target.progressPercentEl;
         const moneyEl = target.moneyEl;
@@ -3646,14 +3650,14 @@
         } else {
           if(!target.card.dataset.chartSel) moneyEl.textContent = formatMoney(state.remaining) + ' €';
           captionEl.textContent = formatMensualite(item, state.monthly);
-          const startOfToday = new Date(now);
+          const startOfToday = new Date(refMs);
           startOfToday.setHours(0, 0, 0, 0);
           const startOfTomorrow = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), startOfToday.getDate() + 1).getTime();
           const stateStartOfDay = creditState(item, startOfToday.getTime());
           const stateEndOfDay = creditState(item, startOfTomorrow);
           const repaidToday = Math.max(0, stateStartOfDay.remaining - state.remaining);
           const totalToday = Math.max(0, stateStartOfDay.remaining - stateEndOfDay.remaining);
-          repaidTodayEl.textContent = t('repaid_today') + ' : ' + formatMoney(repaidToday) + ' € / ' + eurFormatter.format(totalToday) + '€';
+          repaidTodayEl.textContent = (target.card.dataset.chartSel ? t('repaid_day') : t('repaid_today')) + ' : ' + formatMoney(repaidToday) + ' € / ' + eurFormatter.format(totalToday) + '€';
 
           const startOfMonth = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1).getTime();
           const startOfNextMonth = new Date(startOfToday.getFullYear(), startOfToday.getMonth() + 1, 1).getTime();
