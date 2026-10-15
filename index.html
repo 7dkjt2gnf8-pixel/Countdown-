@@ -814,6 +814,77 @@
   #app.style-ios .card.selected{
     box-shadow:0 0 0 2px var(--accent) !important;
   }
+
+  /* ---- Thème "Black" : anthracite, relief doux (néomorphisme) et accent orange ---- */
+  #app.style-black{
+    --bg: #212429;
+    --surface: #2A2D33;
+    --border: #33363D;
+    --text: #D9DADD;
+    --text-muted: #8B8E95;
+    --accent: #F0922B;
+    --accent-dark: #C97716;
+    --danger: #E5604F;
+    --neo: 7px 7px 16px rgba(0,0,0,.55), -5px -5px 12px rgba(255,255,255,.035);
+    --neo-small: 4px 4px 9px rgba(0,0,0,.5), -3px -3px 7px rgba(255,255,255,.03);
+    background:var(--bg);
+  }
+  #app.style-black .settings-btn{background:var(--surface); color:var(--text); box-shadow:var(--neo-small);}
+  #app.style-black .settings-btn:disabled{box-shadow:none;}
+  #app.style-black .card{
+    background:var(--surface) !important;
+    color:var(--text) !important;
+    border:none;
+    box-shadow:var(--neo), 0 0 0 1.5px color-mix(in srgb, var(--card-color, var(--accent)) 55%, transparent) !important;
+  }
+  #app.style-black .card-number,
+  #app.style-black .card-money{background:#25282D !important;}
+  #app.style-black .card-number{border-left:1px solid var(--border);}
+  #app.style-black .card-money{border-top:1px solid var(--border);}
+  #app.style-black .icon-badge{background:#25282D !important; box-shadow:inset 2px 2px 5px rgba(0,0,0,.45), inset -2px -2px 5px rgba(255,255,255,.04);}
+  #app.style-black .progress-track{background:#1C1E22 !important; box-shadow:inset 1px 1px 3px rgba(0,0,0,.6);}
+  #app.style-black .progress-fill{background:var(--accent) !important;}
+  #app.style-black .status-pill{background:#33363D !important; color:var(--text) !important;}
+  #app.style-black .card-action-btn{background:var(--surface) !important; color:var(--text); box-shadow:var(--neo-small);}
+  #app.style-black .card.selected{box-shadow:0 0 0 2px var(--accent) !important;}
+  /* Bloc total */
+  #app.style-black .total-card{background:var(--surface); color:var(--text); border:none; box-shadow:var(--neo);}
+  #app.style-black .total-header{color:var(--text-muted);}
+  #app.style-black .total-amount{color:var(--text);}
+  #app.style-black .total-filter-range{color:var(--accent); background:rgba(240,146,43,.14);}
+  #app.style-black .total-filter-btn{background:#25282D; color:var(--text-muted); box-shadow:var(--neo-small);}
+  #app.style-black .total-filter-btn.active{background:var(--accent); color:#1b1c1f;}
+  #app.style-black .total-chart,
+  #app.style-black .total-chart-cursor-date{color:var(--accent);}
+  #app.style-black .total-chart-dates span{color:var(--text-muted);}
+  #app.style-black .total-scroll::before{background:#1C1E22;}
+  #app.style-black .total-scroll-thumb{background:var(--accent); opacity:.75;}
+  /* Courbes individuelles */
+  #app.style-black .credit-chart-btn{background:#25282D; color:var(--card-color, var(--accent)); box-shadow:var(--neo-small);}
+  #app.style-black .credit-chart-btn.active{background:var(--card-color, var(--accent)); color:#1b1c1f;}
+  #app.style-black .credit-chart-panel,
+  #app.style-black .cc-date{color:var(--card-color, var(--accent));}
+  /* Formulaires et fenêtres */
+  #app.style-black .form-panel,
+  #app.style-black .confirm-box{background:var(--surface); box-shadow:var(--neo);}
+  #app.style-black .field input,
+  #app.style-black .segmented{background:#1F2226; box-shadow:inset 2px 2px 5px rgba(0,0,0,.5), inset -1px -1px 3px rgba(255,255,255,.03);}
+  #app.style-black .segmented button.active,
+  #app.style-black #langSegmented button.active,
+  #app.style-black #styleSegmented button.active{
+    background:var(--surface) !important;
+    color:var(--accent) !important;
+    box-shadow:var(--neo-small);
+  }
+  #app.style-black .icon-swatch{background:#25282D; box-shadow:var(--neo-small); color:var(--text);}
+  #app.style-black .icon-swatch.selected{background:#25282D !important; color:var(--accent) !important; box-shadow:inset 2px 2px 5px rgba(0,0,0,.5), 0 0 0 1.5px var(--accent);}
+  #app.style-black .color-swatch.selected{box-shadow:0 0 0 3px var(--surface), 0 0 0 5px var(--accent) !important;}
+  #app.style-black .ios-switch{background:#1C1E22; box-shadow:inset 2px 2px 5px rgba(0,0,0,.6);}
+  #app.style-black .ios-switch.on{background:var(--accent);}
+  #app.style-black .ios-knob{background:#D9DADD;}
+  #app.style-black .settings-close-btn{background:#25282D; box-shadow:var(--neo-small);}
+  #app.style-black .sort-option{border-color:var(--border);}
+  #app.style-black .calendar-btn{background:#25282D; color:var(--text-muted); box-shadow:var(--neo-small);}
   .card-main{
     display:flex;
     align-items:center;
@@ -1280,7 +1351,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.66</span>
+    <span class="app-version">v1.67</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1303,6 +1374,7 @@
         <div class="segmented" id="styleSegmented">
           <button type="button" data-style="color" data-i18n="settings_style_color">Coloré</button>
           <button type="button" data-style="ios" data-i18n="settings_style_ios">Clair</button>
+          <button type="button" data-style="black" data-i18n="settings_style_black">Black</button>
         </div>
       </div>
 
@@ -1450,6 +1522,7 @@
       settings_style: 'Style d\'affichage',
       settings_style_color: 'Coloré',
       settings_style_ios: 'Clair',
+      settings_style_black: 'Black',
       settings_decimals: 'Décimales affichées',
       settings_total: 'Afficher le bloc total',
       settings_total_off: 'Désactivé',
@@ -1534,6 +1607,7 @@
       settings_style: 'Display style',
       settings_style_color: 'Color',
       settings_style_ios: 'Light',
+      settings_style_black: 'Black',
       settings_decimals: 'Decimal places',
       settings_total: 'Show total block',
       settings_total_off: 'Off',
@@ -1622,7 +1696,7 @@
       if(raw){
         const parsed = JSON.parse(raw);
         if(parsed.lang === 'fr' || parsed.lang === 'en') settings.lang = parsed.lang;
-        if(parsed.style === 'color' || parsed.style === 'ios') settings.style = parsed.style;
+        if(parsed.style === 'color' || parsed.style === 'ios' || parsed.style === 'black') settings.style = parsed.style;
         if(parsed.sortMode === 'dateAsc' || parsed.sortMode === 'dateDesc' || parsed.sortMode === 'manual') settings.sortMode = parsed.sortMode;
         if(typeof parsed.decimals === 'number' && parsed.decimals >= 2 && parsed.decimals <= 5) settings.decimals = parsed.decimals;
         if(typeof parsed.showTotal === 'boolean') settings.showTotal = parsed.showTotal;
@@ -1657,6 +1731,8 @@
 
   function applyStyle(){
     document.getElementById('app').classList.toggle('style-ios', settings.style === 'ios');
+    document.getElementById('app').classList.toggle('style-black', settings.style === 'black');
+    const tc = document.querySelector('meta[name="theme-color"]'); if(tc) tc.setAttribute('content', settings.style === 'black' ? '#212429' : settings.style === 'ios' ? '#F2F2F7' : '#3D7DEA');
   }
   const tabSimple = document.getElementById('tabSimple');
   const tabCredit = document.getElementById('tabCredit');
