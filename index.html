@@ -30,6 +30,9 @@
     --radius: 22px;
   }
   *{box-sizing:border-box;}
+  /* Pas d'ascenseur visible sur la page principale (le défilement reste actif) */
+  html, body{scrollbar-width:none; -ms-overflow-style:none;}
+  html::-webkit-scrollbar, body::-webkit-scrollbar, #app::-webkit-scrollbar{display:none; width:0; height:0; background:transparent;}
   html{
     touch-action:manipulation;
     -webkit-text-size-adjust:100%;
@@ -1351,7 +1354,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.67</span>
+    <span class="app-version">v1.68</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
