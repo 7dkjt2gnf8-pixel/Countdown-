@@ -725,6 +725,14 @@
   }
 
   /* Interrupteur type iOS (capsule verte, curseur large façon iOS 26) */
+  .ios-switch-row.compact{padding:2px 0; margin-bottom:4px;}
+  .ios-switch-row.compact .ios-switch-label{font-size:14px;}
+  .settings-box{max-height:calc(100dvh - 40px); overflow-y:auto;}
+  #app.hide-repaid-today [data-repaid-today],
+  #app.hide-repaid-month [data-repaid-month],
+  #app.hide-interest-month [data-interest-month],
+  #app.hide-monthly [data-caption]{display:none !important;}
+  .credit-chart-btn{margin-left:auto;}
   .ios-switch-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0 2px;}
   .ios-switch-label{font-size:15px; font-weight:600; color:var(--text);}
   .ios-switch{
@@ -1354,7 +1362,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.68</span>
+    <span class="app-version">v1.69</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1394,6 +1402,25 @@
       <div class="settings-row ios-switch-row" id="totalSegmented">
         <span class="ios-switch-label" data-i18n="settings_total">Afficher le bloc total</span>
         <button type="button" class="ios-switch" id="totalSwitch" role="switch" aria-checked="false" aria-label="Afficher le bloc total"><span class="ios-knob"></span></button>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label" data-i18n="settings_card_info">Informations affichées sur les crédits</label>
+      </div>
+      <div class="settings-row ios-switch-row compact">
+        <span class="ios-switch-label" data-i18n="opt_repaid_today">Remboursé aujourd'hui</span>
+        <button type="button" class="ios-switch" data-setting="showRepaidToday" role="switch" aria-checked="false" aria-label="Remboursé aujourd'hui"><span class="ios-knob"></span></button>
+      </div>
+      <div class="settings-row ios-switch-row compact">
+        <span class="ios-switch-label" data-i18n="opt_repaid_month">Remboursé ce mois</span>
+        <button type="button" class="ios-switch" data-setting="showRepaidMonth" role="switch" aria-checked="false" aria-label="Remboursé ce mois"><span class="ios-knob"></span></button>
+      </div>
+      <div class="settings-row ios-switch-row compact">
+        <span class="ios-switch-label" data-i18n="opt_interest_month">Intérêts payés ce mois</span>
+        <button type="button" class="ios-switch" data-setting="showInterestMonth" role="switch" aria-checked="false" aria-label="Intérêts payés ce mois"><span class="ios-knob"></span></button>
+      </div>
+      <div class="settings-row ios-switch-row compact">
+        <span class="ios-switch-label" data-i18n="opt_monthly">Mensualité</span>
+        <button type="button" class="ios-switch" data-setting="showMonthly" role="switch" aria-checked="false" aria-label="Mensualité"><span class="ios-knob"></span></button>
       </div>
     </div>
   </div>
@@ -1528,6 +1555,11 @@
       settings_style_black: 'Black',
       settings_decimals: 'Décimales affichées',
       settings_total: 'Afficher le bloc total',
+      settings_card_info: 'Informations affichées sur les crédits',
+      opt_repaid_today: 'Remboursé aujourd\'hui',
+      opt_repaid_month: 'Remboursé ce mois',
+      opt_interest_month: 'Intérêts payés ce mois',
+      opt_monthly: 'Mensualité',
       settings_total_off: 'Désactivé',
       settings_total_on: 'Activé',
       total_label: 'Total des crédits',
@@ -1613,6 +1645,11 @@
       settings_style_black: 'Black',
       settings_decimals: 'Decimal places',
       settings_total: 'Show total block',
+      settings_card_info: 'Info shown on loans',
+      opt_repaid_today: 'Repaid today',
+      opt_repaid_month: 'Repaid this month',
+      opt_interest_month: 'Interest paid this month',
+      opt_monthly: 'Monthly payment',
       settings_total_off: 'Off',
       settings_total_on: 'On',
       total_label: 'Loans total',
@@ -1691,7 +1728,7 @@
     }
   };
 
-  let settings = {lang: 'fr', style: 'ios', sortMode: 'manual', decimals: 4, showTotal: false, totalFrom: null, totalTo: null, totalIncludeArchived: false, totalPrefSet: false};
+  let settings = {lang: 'fr', style: 'ios', sortMode: 'manual', decimals: 4, showTotal: false, totalFrom: null, totalTo: null, totalIncludeArchived: false, totalPrefSet: false, showRepaidToday: true, showRepaidMonth: true, showInterestMonth: true, showMonthly: true};
 
   function loadSettings(){
     try{
@@ -1705,6 +1742,7 @@
         if(typeof parsed.showTotal === 'boolean') settings.showTotal = parsed.showTotal;
         if(typeof parsed.totalFrom === 'string' || parsed.totalFrom === null) settings.totalFrom = parsed.totalFrom;
         if(typeof parsed.totalTo === 'string' || parsed.totalTo === null) settings.totalTo = parsed.totalTo;
+        ['showRepaidToday','showRepaidMonth','showInterestMonth','showMonthly'].forEach(k => { if(typeof parsed[k] === 'boolean') settings[k] = parsed[k]; });
         if(typeof parsed.totalPrefSet === 'boolean') settings.totalPrefSet = parsed.totalPrefSet;
         if(typeof parsed.totalIncludeArchived === 'boolean') settings.totalIncludeArchived = parsed.totalIncludeArchived;
       }
@@ -1732,7 +1770,16 @@
     render();
   }
 
+  function applyCardInfoOptions(){
+    const app = document.getElementById('app');
+    app.classList.toggle('hide-repaid-today', !settings.showRepaidToday);
+    app.classList.toggle('hide-repaid-month', !settings.showRepaidMonth);
+    app.classList.toggle('hide-interest-month', !settings.showInterestMonth);
+    app.classList.toggle('hide-monthly', !settings.showMonthly);
+  }
+
   function applyStyle(){
+    applyCardInfoOptions();
     document.getElementById('app').classList.toggle('style-ios', settings.style === 'ios');
     document.getElementById('app').classList.toggle('style-black', settings.style === 'black');
     const tc = document.querySelector('meta[name="theme-color"]'); if(tc) tc.setAttribute('content', settings.style === 'black' ? '#212429' : settings.style === 'ios' ? '#F2F2F7' : '#3D7DEA');
@@ -3781,6 +3828,11 @@
     const sw = document.getElementById('totalSwitch');
     sw.classList.toggle('on', settings.showTotal);
     sw.setAttribute('aria-checked', settings.showTotal ? 'true' : 'false');
+    document.querySelectorAll('[data-setting]').forEach(b => {
+      const on = !!settings[b.getAttribute('data-setting')];
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
   }
 
   settingsBtn.addEventListener('click', () => {
@@ -3815,6 +3867,15 @@
       saveSettings();
       refreshSettingsUI();
       tick();
+    });
+  });
+  document.querySelectorAll('[data-setting]').forEach(b => {
+    b.addEventListener('click', () => {
+      const k = b.getAttribute('data-setting');
+      settings[k] = !settings[k];
+      saveSettings();
+      applyCardInfoOptions();
+      refreshSettingsUI();
     });
   });
   document.getElementById('totalSwitch').addEventListener('click', () => {
