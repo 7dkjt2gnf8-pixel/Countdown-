@@ -743,7 +743,7 @@
   #app.hide-interest-month [data-interest-month],
   #app.hide-monthly [data-caption]{display:none !important;}
   .credit-chart-btn{margin-left:auto;}
-  .credit-filter-btn + .credit-chart-btn{margin-left:0;}
+  .credit-chart-row.fopen .credit-chart-btn{margin-left:0;}
   .credit-chart-row{flex-wrap:nowrap; gap:6px;}
   .credit-chart-row .money-caption{white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;}
   .credit-chart-row .cc-date{flex-shrink:0;}
@@ -1376,7 +1376,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.71</span>
+    <span class="app-version">v1.72</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -3560,8 +3560,8 @@
       el.addEventListener('pointercancel', () => { active = false; dragging = false; scheduleBack(); });
     }
 
-    function open(){ panel.style.display = ''; cardEl.querySelector('[data-chart-date]').style.display = ''; btn.classList.add('active'); fbtn.style.display = ''; openCreditCharts.add(item.id); build(); }
-    function close(){ panel.style.display = 'none'; cardEl.querySelector('[data-chart-date]').style.display = 'none'; btn.classList.remove('active'); fbtn.style.display = 'none'; openCreditCharts.delete(item.id); clearTimeout(resetTimer); cancelAnimationFrame(raf); sel = null; delete cardEl.dataset.chartSel; }
+    function open(){ panel.style.display = ''; cardEl.querySelector('[data-chart-date]').style.display = ''; btn.classList.add('active'); fbtn.style.display = ''; row.classList.add('fopen'); openCreditCharts.add(item.id); build(); }
+    function close(){ panel.style.display = 'none'; cardEl.querySelector('[data-chart-date]').style.display = 'none'; btn.classList.remove('active'); fbtn.style.display = 'none'; row.classList.remove('fopen'); openCreditCharts.delete(item.id); clearTimeout(resetTimer); cancelAnimationFrame(raf); sel = null; delete cardEl.dataset.chartSel; }
     btn.addEventListener('click', () => { panel.style.display === 'none' ? open() : close(); });
     fbtn.classList.toggle('active', !!(item.chartFrom || item.chartTo));
     fbtn.addEventListener('click', () => openCreditFilter(item, () => { sel = null; fbtn.classList.toggle('active', !!(item.chartFrom || item.chartTo)); build(); }));
