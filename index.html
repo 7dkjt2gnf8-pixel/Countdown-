@@ -505,6 +505,16 @@
   .credit-chart-btn.active{background:rgba(255,255,255,.4); color:inherit;}
   #app.style-ios .credit-chart-btn{background:color-mix(in srgb, var(--card-color, #007AFF) 18%, #fff); color:var(--card-color, #007AFF);}
   #app.style-ios .credit-chart-btn.active{background:var(--card-color, #007AFF); color:#fff;}
+  .credit-filter-btn{
+    flex-shrink:0; width:30px; height:30px; margin-bottom:-4px; border:none; border-radius:9px; padding:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    background:rgba(255,255,255,.2); color:inherit;
+  }
+  .credit-filter-btn.active{background:rgba(255,255,255,.4); color:inherit;}
+  #app.style-ios .credit-filter-btn{background:color-mix(in srgb, var(--card-color, #007AFF) 18%, #fff); color:var(--card-color, #007AFF);}
+  #app.style-ios .credit-filter-btn.active{background:var(--card-color, #007AFF); color:#fff;}
+  #app.style-black .credit-filter-btn{background:#25282D; color:var(--card-color, var(--accent)); box-shadow:var(--neo-small);}
+  #app.style-black .credit-filter-btn.active{background:var(--card-color, var(--accent)); color:#1b1c1f;}
   .credit-chart-panel{margin-top:10px; color:inherit;}
   #app.style-ios .credit-chart-panel{color:var(--card-color, #007AFF);}
   .cc-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-variant-numeric:tabular-nums;}
@@ -733,6 +743,7 @@
   #app.hide-interest-month [data-interest-month],
   #app.hide-monthly [data-caption]{display:none !important;}
   .credit-chart-btn{margin-left:auto;}
+  .credit-filter-btn + .credit-chart-btn{margin-left:0;}
   .ios-switch-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0 2px;}
   .ios-switch-label{font-size:15px; font-weight:600; color:var(--text);}
   .ios-switch{
@@ -1362,7 +1373,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.69</span>
+    <span class="app-version">v1.70</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1469,6 +1480,36 @@
           <span data-i18n="action_delete">Supprimer</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-backdrop" id="creditFilterBackdrop" style="display:none;">
+    <div class="confirm-box settings-box">
+      <div class="settings-header">
+        <p class="settings-title" data-i18n="credit_filter_title">Filtrer la courbe</p>
+        <button type="button" id="creditFilterCloseBtn" class="settings-close-btn" aria-label="Fermer">✕</button>
+      </div>
+      <div class="year-wheels-row">
+        <div class="year-wheel-col">
+          <label class="settings-label" data-i18n="total_filter_from">Du</label>
+          <div class="year-wheel" id="creditFromWheel">
+            <div class="year-wheel-track" id="creditFromWheelTrack"></div>
+            <div class="year-wheel-highlight"></div>
+          </div>
+        </div>
+        <div class="year-wheel-col">
+          <label class="settings-label" data-i18n="total_filter_to">Au</label>
+          <div class="year-wheel" id="creditToWheel">
+            <div class="year-wheel-track" id="creditToWheelTrack"></div>
+            <div class="year-wheel-highlight"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-error" id="creditFilterError"></div>
+      <div class="submit-row">
+        <button type="button" id="creditFilterResetBtn" class="secondary" data-i18n="total_filter_reset">Réinitialiser</button>
+        <button type="button" id="creditFilterApplyBtn" class="primary" data-i18n="total_filter_apply">Appliquer</button>
       </div>
     </div>
   </div>
@@ -1623,6 +1664,7 @@
       word_no: 'Non',
       word_yes: 'Oui',
       total_filter_title: 'Filtrer le total',
+      credit_filter_title: 'Filtrer la courbe',
       total_filter_from: 'Du',
       total_filter_to: 'Au',
       total_filter_archived: 'Inclure les archivés',
@@ -1713,6 +1755,7 @@
       word_no: 'No',
       word_yes: 'Yes',
       total_filter_title: 'Filter the total',
+      credit_filter_title: 'Filter the chart',
       total_filter_from: 'From',
       total_filter_to: 'To',
       total_filter_archived: 'Include archived',
@@ -2253,7 +2296,7 @@
     if(editingId){
       const idx = items.findIndex(i => i.id === editingId);
       if(idx !== -1){
-        items[idx] = Object.assign({id: items[idx].id, createdAt: items[idx].createdAt, order: items[idx].order}, fields);
+        items[idx] = Object.assign({id: items[idx].id, createdAt: items[idx].createdAt, order: items[idx].order, chartFrom: items[idx].chartFrom, chartTo: items[idx].chartTo}, fields);
       }
     } else {
       // Premier crédit créé : on active le bloc total par défaut (sauf choix explicite de l'utilisateur)
@@ -3377,8 +3420,10 @@
   const openCreditCharts = new Set();
 
   function creditChartRange(item){
-    const minStart = new Date(item.initialDate || item.startDate).getTime();
-    const maxEnd = new Date(item.endDate).getTime();
+    let minStart = new Date(item.initialDate || item.startDate).getTime();
+    let maxEnd = new Date(item.endDate).getTime();
+    if(item.chartFrom) minStart = Math.max(minStart, new Date(item.chartFrom, 0, 1).getTime());
+    if(item.chartTo) maxEnd = Math.min(maxEnd, new Date(item.chartTo, 11, 31, 23, 59, 59).getTime());
     return {minStart, maxEnd};
   }
 
@@ -3386,7 +3431,8 @@
     const btn = cardEl.querySelector('[data-chart-btn]');
     const panel = cardEl.querySelector('[data-chart-panel]');
     const row = cardEl.querySelector('.credit-chart-row');
-    if(!btn || !panel) return;
+    const fbtn = cardEl.querySelector('[data-chart-filter-btn]');
+    if(!btn || !panel || !fbtn) return;
 
     // Les gestes dans cette zone ne doivent pas déclencher l'appui long / le glisser de la vignette
     [row, panel].forEach(el => {
@@ -3408,7 +3454,7 @@
 
     function build(){
       ({minStart, maxEnd} = creditChartRange(item));
-      if(!(maxEnd > minStart)){ panel.innerHTML = ''; return; }
+      if(!(maxEnd > minStart)){ panel.innerHTML = ''; range = null; return; }
       const N = 48, pts = [];
       for(let i = 0; i <= N; i++){ const ms = minStart + (maxEnd - minStart) * i / N; pts.push({ms, v: valueAt(ms)}); }
       let mx = Math.max(...pts.map(p => p.v), 1), mn = Math.min(...pts.map(p => p.v));
@@ -3416,7 +3462,7 @@
       const pad = (mx - mn) * 0.06; minVal = Math.max(0, mn - pad); valSpan = (mx + pad) - minVal;
       const path = pts.map((p, i) => (i ? 'L' : 'M') + xFor(p.ms).toFixed(1) + ' ' + yFor(p.v).toFixed(1)).join(' ');
       const base = padT + plotH;
-      const ticks = [new Date(item.startDate).getTime(), maxEnd, minStart].filter((v, i, a) => a.indexOf(v) === i)
+      const ticks = [new Date(item.startDate).getTime(), maxEnd, minStart].filter((v, i, a) => a.indexOf(v) === i && v >= minStart && v <= maxEnd)
         .map(ms => '<line x1="' + xFor(ms).toFixed(1) + '" y1="' + (base - 4) + '" x2="' + xFor(ms).toFixed(1) + '" y2="' + (base + 4) + '" stroke="currentColor" stroke-opacity="0.55" stroke-width="1.5"></line>').join('');
       const now = nowClamped(), gx = xFor(now).toFixed(1), gy = yFor(valueAt(now)).toFixed(1);
       const svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
@@ -3436,7 +3482,7 @@
       thumbEl = panel.querySelector('.cc-thumb'); todayEl = panel.querySelector('.cc-today'); scrollEl = panel.querySelector('.cc-scroll');
       // dates : une seule ligne, on masque celles qui se chevauchent
       const wPx = panel.clientWidth || 280;
-      const cand = [minStart, new Date(item.startDate).getTime(), maxEnd].filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b);
+      const cand = [minStart, new Date(item.startDate).getTime(), maxEnd].filter((v, i, a) => a.indexOf(v) === i && v >= minStart && v <= maxEnd).sort((a, b) => a - b);
       const kept = [];
       [cand[0], cand[cand.length - 1], ...cand.slice(1, -1)].forEach(ms => {
         const xp = (xFor(ms) / W) * 100, x = xp / 100 * wPx, label = formatShortDate(ms), w = label.length * 5.3 + 4;
@@ -3511,11 +3557,43 @@
       el.addEventListener('pointercancel', () => { active = false; dragging = false; scheduleBack(); });
     }
 
-    function open(){ panel.style.display = ''; cardEl.querySelector('[data-chart-date]').style.display = ''; btn.classList.add('active'); openCreditCharts.add(item.id); build(); }
-    function close(){ panel.style.display = 'none'; cardEl.querySelector('[data-chart-date]').style.display = 'none'; btn.classList.remove('active'); openCreditCharts.delete(item.id); clearTimeout(resetTimer); cancelAnimationFrame(raf); sel = null; delete cardEl.dataset.chartSel; }
+    function open(){ panel.style.display = ''; cardEl.querySelector('[data-chart-date]').style.display = ''; btn.classList.add('active'); fbtn.style.display = ''; openCreditCharts.add(item.id); build(); }
+    function close(){ panel.style.display = 'none'; cardEl.querySelector('[data-chart-date]').style.display = 'none'; btn.classList.remove('active'); fbtn.style.display = 'none'; openCreditCharts.delete(item.id); clearTimeout(resetTimer); cancelAnimationFrame(raf); sel = null; delete cardEl.dataset.chartSel; }
     btn.addEventListener('click', () => { panel.style.display === 'none' ? open() : close(); });
+    fbtn.classList.toggle('active', !!(item.chartFrom || item.chartTo));
+    fbtn.addEventListener('click', () => openCreditFilter(item, () => { sel = null; fbtn.classList.toggle('active', !!(item.chartFrom || item.chartTo)); build(); }));
     if(openCreditCharts.has(item.id)) open();
   }
+
+  // ---- Filtre par année de la courbe d'un crédit ----
+  const creditFilterBackdrop = document.getElementById('creditFilterBackdrop');
+  const creditFilterError = document.getElementById('creditFilterError');
+  let creditFilterCtx = null, creditFromWheel = null, creditToWheel = null;
+  function openCreditFilter(item, onDone){
+    const startY = new Date(item.initialDate || item.startDate).getFullYear(), endY = new Date(item.endDate).getFullYear();
+    creditFromWheel = buildYearWheel('creditFromWheel', 'creditFromWheelTrack', startY, endY);
+    creditToWheel = buildYearWheel('creditToWheel', 'creditToWheelTrack', startY, endY);
+    creditFilterCtx = {item, onDone};
+    creditFilterError.style.display = 'none';
+    creditFilterBackdrop.style.display = 'flex';
+    lockBodyScroll();
+    requestAnimationFrame(() => { creditFromWheel.set(item.chartFrom || null); creditToWheel.set(item.chartTo || null); });
+  }
+  function closeCreditFilter(){ creditFilterBackdrop.style.display = 'none'; unlockBodyScroll(); creditFilterCtx = null; }
+  document.getElementById('creditFilterCloseBtn').addEventListener('click', closeCreditFilter);
+  creditFilterBackdrop.addEventListener('click', e => { if(e.target === creditFilterBackdrop) closeCreditFilter(); });
+  document.getElementById('creditFilterResetBtn').addEventListener('click', () => {
+    if(!creditFilterCtx) return;
+    const {item, onDone} = creditFilterCtx;
+    item.chartFrom = null; item.chartTo = null; saveItems(); closeCreditFilter(); onDone();
+  });
+  document.getElementById('creditFilterApplyBtn').addEventListener('click', () => {
+    if(!creditFilterCtx) return;
+    const from = creditFromWheel.get(), to = creditToWheel.get();
+    if(from && to && to < from){ creditFilterError.textContent = t('total_filter_err_order'); creditFilterError.style.display = 'block'; return; }
+    const {item, onDone} = creditFilterCtx;
+    item.chartFrom = from || null; item.chartTo = to || null; saveItems(); closeCreditFilter(); onDone();
+  });
 
   // ---- Render ----
   function render(){
@@ -3608,6 +3686,9 @@
             <div class="credit-chart-row">
               <div class="money-caption" data-caption>${t('credit_disclaimer')}</div>
               <span class="cc-date" data-chart-date style="display:none;"></span>
+              <button type="button" class="credit-filter-btn" data-chart-filter-btn style="display:none;" aria-label="Filtrer par année" title="Filtrer par année">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              </button>
               <button type="button" class="credit-chart-btn" data-chart-btn aria-label="Courbe du crédit" title="Courbe du crédit">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
               </button>
