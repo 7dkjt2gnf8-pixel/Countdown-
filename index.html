@@ -744,8 +744,12 @@
   #app.hide-monthly [data-caption]{display:none !important;}
   .credit-chart-btn{margin-left:auto;}
   .credit-chart-row.fopen .credit-chart-btn{margin-left:0;}
-  #app.pull-chart-btn .credit-chart-row:not(.fopen){height:0; margin-top:-27px; margin-bottom:18px; align-items:flex-start;}
+  #app.pull-chart-btn .credit-chart-row:not(.fopen){height:0; margin-top:-27px; margin-bottom:27px; align-items:flex-start;}
   #app.pull-chart-btn .credit-chart-row:not(.fopen) .credit-chart-btn{margin-bottom:0;}
+  .credit-chart-row{position:relative; z-index:1;}
+  #app.pull-chart-btn:not(.hide-interest-month) .card-money:has(.credit-chart-row:not(.fopen)) [data-interest-month],
+  #app.pull-chart-btn.hide-interest-month:not(.hide-repaid-month) .card-money:has(.credit-chart-row:not(.fopen)) [data-repaid-month],
+  #app.pull-chart-btn.hide-interest-month.hide-repaid-month .card-money:has(.credit-chart-row:not(.fopen)) [data-repaid-today]{padding-right:40px;}
   .credit-chart-row{flex-wrap:nowrap; gap:6px;}
   .credit-chart-row .money-caption{white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;}
   .credit-chart-row .cc-date{flex-shrink:0;}
@@ -1378,7 +1382,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.75</span>
+    <span class="app-version">v1.77</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
