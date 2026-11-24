@@ -744,6 +744,8 @@
   #app.hide-monthly [data-caption]{display:none !important;}
   .credit-chart-btn{margin-left:auto;}
   .credit-chart-row.fopen .credit-chart-btn{margin-left:0;}
+  #app.pull-chart-btn .credit-chart-row:not(.fopen){height:0; margin-top:-27px; margin-bottom:18px; align-items:flex-start;}
+  #app.pull-chart-btn .credit-chart-row:not(.fopen) .credit-chart-btn{margin-bottom:0;}
   .credit-chart-row{flex-wrap:nowrap; gap:6px;}
   .credit-chart-row .money-caption{white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;}
   .credit-chart-row .cc-date{flex-shrink:0;}
@@ -1376,7 +1378,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.72</span>
+    <span class="app-version">v1.73</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -1822,6 +1824,7 @@
     app.classList.toggle('hide-repaid-month', !settings.showRepaidMonth);
     app.classList.toggle('hide-interest-month', !settings.showInterestMonth);
     app.classList.toggle('hide-monthly', !settings.showMonthly);
+    app.classList.toggle('pull-chart-btn', !settings.showMonthly && (settings.showRepaidToday || settings.showRepaidMonth || settings.showInterestMonth));
   }
 
   function applyStyle(){
