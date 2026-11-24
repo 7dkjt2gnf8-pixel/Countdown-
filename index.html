@@ -1378,7 +1378,7 @@
   <footer class="app-footer">
     <span id="footerText" data-i18n="footer">Designed by Mienos</span>
     <!-- APP_VERSION: incrémenter (vX.Y -> vX.Y+1) à chaque modification du fichier -->
-    <span class="app-version">v1.73</span>
+    <span class="app-version">v1.75</span>
   </footer>
 
   <div class="confirm-backdrop" id="settingsBackdrop" style="display:none;">
@@ -2716,7 +2716,10 @@
     while(k < n - 1 && boundaries[k + 1] <= now) k++;
     const segStart = boundaries[k];
     const segEnd = boundaries[k + 1];
-    const frac = segEnd > segStart ? (now - segStart) / (segEnd - segStart) : 0;
+    // Progression dans la période mesurée en temps "mur" local, pour que le passage heure d'été/hiver
+    // (jours de 23 h ou 25 h) ne fausse pas la répartition capital/intérêts.
+    const loc = ms => ms - new Date(ms).getTimezoneOffset() * 60000;
+    const frac = segEnd > segStart ? (loc(now) - loc(segStart)) / (loc(segEnd) - loc(segStart)) : 0;
     const remaining = Math.max(0, balances[k] + (balances[k + 1] - balances[k]) * frac);
     const progress = progressFor(remaining);
 
@@ -3883,10 +3886,9 @@
           const totalMonth = Math.max(0, stateStartOfMonth.remaining - stateEndOfMonth.remaining);
           repaidMonthEl.textContent = t('repaid_month') + ' : ' + threeDecFormatter.format(repaidMonth) + '€/' + eurFormatter.format(totalMonth) + '€';
 
-          const totalInterestMonth = Math.max(0, state.monthly - totalMonth);
-          const fractionElapsed = startOfNextMonth > startOfMonth ? (now - startOfMonth) / (startOfNextMonth - startOfMonth) : 0;
-          const totalPaidSoFarMonth = state.monthly * Math.min(1, Math.max(0, fractionElapsed));
-          const interestMonth = Math.min(totalInterestMonth, Math.max(0, totalPaidSoFarMonth - repaidMonth));
+          const intStart = stateStartOfMonth.interestPaid || 0;
+          const totalInterestMonth = Math.max(0, (stateEndOfMonth.interestPaid || 0) - intStart);
+          const interestMonth = Math.min(totalInterestMonth, Math.max(0, (state.interestPaid || 0) - intStart));
           interestMonthEl.textContent = t('interest_month') + ' : ' + threeDecFormatter.format(interestMonth) + '€/' + eurFormatter.format(totalInterestMonth) + '€';
         }
       }
